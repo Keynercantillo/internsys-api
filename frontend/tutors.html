@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InternSys - Tutores</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100%;
+            background: #1e2a3a;
+            color: white;
+            transition: all 0.3s;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .sidebar.closed { margin-left: -260px; }
+        
+        .sidebar-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #2c3e50;
+        }
+        
+        .sidebar-header h4 i {
+            margin-right: 10px;
+            color: #e67e22;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+        
+        .sidebar-menu .menu-item {
+            display: block;
+            padding: 12px 20px;
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+        
+        .sidebar-menu .menu-item:hover, 
+        .sidebar-menu .menu-item.active {
+            background: #e67e22;
+            color: white;
+        }
+        
+        .sidebar-menu .menu-item i {
+            width: 25px;
+            margin-right: 10px;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            transition: 0.3s;
+            min-height: 100vh;
+        }
+        
+        .main-content.expanded { margin-left: 0; }
+        
+        /* Navbar */
+        .navbar {
+            padding: 0.75rem 1.5rem;
+            background: #e67e22;
+            color: white;
+        }
+        
+        .navbar .btn-light {
+            background: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+        }
+        
+        .navbar-brand {
+            font-weight: 600;
+            color: white !important;
+        }
+        
+        /* Tabla */
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+        
+        /* Botones */
+        .btn-add {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-add:hover {
+            background: #229954;
+            transform: translateY(-2px);
+        }
+        
+        .btn-edit {
+            background: #f39c12;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-right: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-edit:hover {
+            background: #e67e22;
+            transform: translateY(-2px);
+        }
+        
+        .btn-delete {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-delete:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+        
+        .btn-view {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-view:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        /* Modal */
+        .modal-header.bg-primary {
+            background: #e67e22 !important;
+        }
+        
+        /* Badges */
+        .badge-tutor {
+            background: #e67e22;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        .badge-academic {
+            background: #3498db;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                margin-left: -260px;
+            }
+            .sidebar.open {
+                margin-left: 0;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .main-content.sidebar-open {
+                margin-left: 260px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h4><i class="fas fa-graduation-cap"></i> InternSys</h4>
+            <small id="roleLabel">Cargando...</small>
+        </div>
+        <ul class="sidebar-menu" id="sidebarMenu">
+            <!-- El menú se carga dinámicamente según el rol -->
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Navbar -->
+        <nav class="navbar">
+            <div class="container-fluid">
+                <button class="btn btn-light" id="toggleSidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <span class="navbar-brand mb-0 h4">Gestión de Tutores</span>
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user"></i> <span id="userName">Usuario</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="my-profile.html"><i class="fas fa-user-edit"></i> Mi Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="cerrarSesion()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Contenido -->
+        <div class="container-fluid mt-4">
+            <!-- Botón Agregar (solo visible para admin) -->
+            <div id="btnAddContainer" style="display: none;">
+                <button class="btn btn-add" onclick="showCreateModal()">
+                    <i class="fas fa-plus"></i> Nuevo Tutor
+                </button>
+            </div>
+            
+            <!-- Tabla de Tutores -->
+            <div class="table-container">
+                <table id="tutorsTable" class="table table-striped table-bordered" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>Cédula</th>
+                            <th>Edad</th>
+                            <th>Tipo</th>
+                            <th>Teléfono</th>
+                            <th>Email</th>
+                            <th>Empresa</th>
+                            <th>Acciones</th>
+                        </thead>
+                    <tbody>
+                        <!-- Los datos se cargan dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Crear/Editar (solo admin) -->
+    <div class="modal fade" id="tutorModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary">
+                    <h5 class="modal-title" id="modalTitle">Nuevo Tutor</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="tutorForm">
+                        <input type="hidden" id="tutorId">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label>Nombre *</label>
+                                    <input type="text" class="form-control" id="nombre" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label>Apellido *</label>
+                                    <input type="text" class="form-control" id="apellido" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label>Cédula *</label>
+                                    <input type="text" class="form-control" id="cedula" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label>Edad *</label>
+                                    <input type="number" class="form-control" id="edad" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label>Usuario *</label>
+                                    <input type="text" class="form-control" id="usuario" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label>Contraseña *</label>
+                                    <input type="password" class="form-control" id="contraseña" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label>Tipo *</label>
+                                    <select class="form-control" id="tipo" required>
+                                        <option value="empresarial">Empresarial</option>
+                                        <option value="academico">Académico</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label>Especialidad</label>
+                                    <input type="text" class="form-control" id="especialidad">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label>Teléfono *</label>
+                                    <input type="text" class="form-control" id="telefono" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label>Email *</label>
+                                    <input type="email" class="form-control" id="email" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label>Empresa (si es empresarial)</label>
+                                    <select class="form-control" id="empresa_id">
+                                        <option value="">Seleccione empresa...</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveTutor()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Ver Detalles (todos los roles) -->
+    <div class="modal fade" id="viewTutorModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">Detalles del Tutor</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="viewTutorContent"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="js/services/api.js"></script>
+    
+    <script>
+        let tutorsTable;
+        let currentEditId = null;
+        let companiesList = [];
+        
+        // ============================================
+        // FUNCIONES DE UTILIDAD
+        // ============================================
+        
+        function getCurrentUser() {
+            const user = localStorage.getItem('internsys_user');
+            return user ? JSON.parse(user) : null;
+        }
+        
+        function getRole() {
+            const user = getCurrentUser();
+            return user ? user.rol : null;
+        }
+        
+        function isAdmin() {
+            return getRole() === 'admin';
+        }
+        
+        function isStudent() {
+            return getRole() === 'estudiante';
+        }
+        
+        function isTutor() {
+            return getRole() === 'tutor' || getRole() === 'docente';
+        }
+        
+        function cerrarSesion() {
+            localStorage.removeItem('internsys_user');
+            localStorage.removeItem('internsys_token');
+            window.location.href = 'index.html';
+        }
+        
+        function showAlert(title, message, type = 'success') {
+            Swal.fire({
+                title: title,
+                text: message,
+                icon: type,
+                confirmButtonColor: '#e67e22',
+                timer: 2000,
+                timerProgressBar: true
+            });
+        }
+        
+        // ============================================
+        // MENÚ LATERAL SEGÚN ROL
+        // ============================================
+        
+        function loadSidebarMenu() {
+            const user = getCurrentUser();
+            const menu = document.getElementById('sidebarMenu');
+            const roleLabel = document.getElementById('roleLabel');
+            const userNameSpan = document.getElementById('userName');
+            
+            if (!user) return;
+            
+            roleLabel.innerText = user.rol === 'admin' ? 'Administrador' : 
+                                  user.rol === 'estudiante' ? 'Estudiante' : 'Tutor';
+            userNameSpan.innerText = user.nombre || 'Usuario';
+            
+            if (user.rol === 'admin') {
+                menu.innerHTML = `
+                    <li><a href="dashboard-admin.html" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="students.html" class="menu-item"><i class="fas fa-user-graduate"></i> Estudiantes</a></li>
+                    <li><a href="companies.html" class="menu-item"><i class="fas fa-building"></i> Empresas</a></li>
+                    <li><a href="tutors.html" class="menu-item active"><i class="fas fa-chalkboard-user"></i> Tutores</a></li>
+                    <li><a href="offers.html" class="menu-item"><i class="fas fa-briefcase"></i> Ofertas</a></li>
+                    <li><a href="assignments.html" class="menu-item"><i class="fas fa-handshake"></i> Asignaciones</a></li>
+                    <li><a href="users.html" class="menu-item"><i class="fas fa-users"></i> Usuarios</a></li>
+                `;
+                document.getElementById('btnAddContainer').style.display = 'block';
+            } else if (user.rol === 'estudiante') {
+                menu.innerHTML = `
+                    <li><a href="dashboard-student.html" class="menu-item"><i class="fas fa-tachometer-alt"></i> Mi Dashboard</a></li>
+                    <li><a href="my-profile.html" class="menu-item"><i class="fas fa-user"></i> Mi Perfil</a></li>
+                    <li><a href="my-assignments.html" class="menu-item"><i class="fas fa-tasks"></i> Mis Asignaciones</a></li>
+                    <li><a href="my-evaluations.html" class="menu-item"><i class="fas fa-star"></i> Mis Evaluaciones</a></li>
+                    <li><a href="offers.html" class="menu-item"><i class="fas fa-briefcase"></i> Ofertas</a></li>
+                `;
+                document.getElementById('btnAddContainer').style.display = 'none';
+            } else if (user.rol === 'tutor' || user.rol === 'docente') {
+                menu.innerHTML = `
+                    <li><a href="dashboard-tutor.html" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="my-students.html" class="menu-item"><i class="fas fa-users"></i> Mis Estudiantes</a></li>
+                    <li><a href="evaluations.html" class="menu-item"><i class="fas fa-star"></i> Evaluaciones</a></li>
+                    <li><a href="followup.html" class="menu-item"><i class="fas fa-calendar-check"></i> Visitas</a></li>
+                    <li><a href="my-profile.html" class="menu-item"><i class="fas fa-user"></i> Mi Perfil</a></li>
+                `;
+                document.getElementById('btnAddContainer').style.display = 'none';
+            }
+        }
+        
+        // ============================================
+        // CARGAR EMPRESAS PARA SELECT
+        // ============================================
+        
+        async function loadCompanies() {
+            try {
+                const response = await CompanyService.getAll();
+                companiesList = response.result || [];
+                const select = document.getElementById('empresa_id');
+                select.innerHTML = '<option value="">Seleccione empresa...</option>';
+                companiesList.forEach(c => {
+                    select.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+                });
+            } catch (error) {
+                console.error('Error loading companies:', error);
+            }
+        }
+        
+        // ============================================
+        // DATATABLE DE TUTORES
+        // ============================================
+        
+        async function initDataTable() {
+            try {
+                const response = await TutorService.getAll();
+                const tutors = response.result || [];
+                const companiesResponse = await CompanyService.getAll();
+                const companies = companiesResponse.result || [];
+                
+                const companyMap = {};
+                companies.forEach(c => companyMap[c.id] = c.name);
+                
+                console.log('Tutores recibidos:', tutors);
+                console.log('Rol del usuario:', getRole());
+                
+                // Definir columnas según el rol
+                let columns = [
+                    { title: "ID" },
+                    { title: "Nombre" },
+                    { title: "Apellido" },
+                    { title: "Cédula" },
+                    { title: "Edad" },
+                    { title: "Tipo" },
+                    { title: "Teléfono" },
+                    { title: "Email" },
+                    { title: "Empresa" }
+                ];
+                
+                // Solo admin puede ver y editar acciones
+                if (isAdmin()) {
+                    columns.push({ title: "Acciones", orderable: false });
+                } else if (isTutor()) {
+                    columns.push({ title: "Acciones", orderable: false });
+                }
+                
+                // Construir datos
+                const data = tutors.map(tutor => {
+                    let tipoBadge = tutor.tipo === 'empresarial' ? 
+                        '<span class="badge-tutor">Empresarial</span>' : 
+                        '<span class="badge-academic">Académico</span>';
+                    
+                    const row = [
+                        tutor.id || 0,
+                        tutor.nombre || '',
+                        tutor.apellido || '',
+                        tutor.cedula || '',
+                        tutor.edad || 0,
+                        tipoBadge,
+                        tutor.telefono || '-',
+                        tutor.email || '-',
+                        companyMap[tutor.empresa_id] || '-'
+                    ];
+                    
+                    // Agregar acciones según rol
+                    if (isAdmin()) {
+                        row.push(`
+                            <button class="btn-view" onclick="viewTutor(${tutor.id})"><i class="fas fa-eye"></i> Ver</button>
+                            <button class="btn-edit" onclick="editTutor(${tutor.id})"><i class="fas fa-edit"></i> Editar</button>
+                            <button class="btn-delete" onclick="deleteTutor(${tutor.id})"><i class="fas fa-trash"></i> Eliminar</button>
+                        `);
+                    } else if (isTutor()) {
+                        row.push(`
+                            <button class="btn-view" onclick="viewTutor(${tutor.id})"><i class="fas fa-eye"></i> Ver</button>
+                        `);
+                    }
+                    
+                    return row;
+                });
+                
+                console.log('Datos preparados:', data);
+                
+                // Destruir DataTable si ya existe
+                if (tutorsTable) {
+                    tutorsTable.destroy();
+                }
+                
+                // Crear DataTable
+                tutorsTable = $('#tutorsTable').DataTable({
+                    data: data,
+                    columns: columns,
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+                    },
+                    pageLength: 10,
+                    lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "Todos"]],
+                    order: [[0, 'desc']],
+                    responsive: true
+                });
+                
+            } catch (error) {
+                console.error('Error en initDataTable:', error);
+                $('#tutorsTable tbody').html(`<tr><td colspan="10" class="text-center text-danger">Error al cargar: ${error.message}</td></tr>`);
+                showAlert('Error', 'Error al cargar tutores: ' + error.message, 'error');
+            }
+        }
+        
+        // ============================================
+        // CRUD DE TUTORES (SOLO ADMIN)
+        // ============================================
+        
+        // Ver tutor (todos los roles)
+        async function viewTutor(id) {
+            try {
+                const response = await TutorService.getById(id);
+                const tutor = response;
+                
+                const companiesResponse = await CompanyService.getAll();
+                const companies = companiesResponse.result || [];
+                const companyMap = {};
+                companies.forEach(c => companyMap[c.id] = c.name);
+                
+                const content = `
+                    <table class="table table-bordered">
+                        <tr><th width="40%">ID</th><td>${tutor.id}</td></tr>
+                        <tr><th>Nombre Completo</th><td>${tutor.nombre} ${tutor.apellido}</td></tr>
+                        <tr><th>Cédula</th><td>${tutor.cedula}</td></tr>
+                        <tr><th>Edad</th><td>${tutor.edad}</td></tr>
+                        <tr><th>Usuario</th><td>${tutor.usuario}</td></tr>
+                        <tr><th>Tipo</th><td>${tutor.tipo === 'empresarial' ? 'Empresarial' : 'Académico'}</td></tr>
+                        <tr><th>Especialidad</th><td>${tutor.especialidad || 'N/A'}</td></tr>
+                        <tr><th>Teléfono</th><td>${tutor.telefono}</td></tr>
+                        <tr><th>Email</th><td>${tutor.email}</td></tr>
+                        <tr><th>Empresa</th><td>${companyMap[tutor.empresa_id] || 'N/A'}</td></tr>
+                    </table>
+                `;
+                
+                document.getElementById('viewTutorContent').innerHTML = content;
+                new bootstrap.Modal(document.getElementById('viewTutorModal')).show();
+            } catch (error) {
+                showAlert('Error', 'Error al cargar tutor: ' + error.message, 'error');
+            }
+        }
+        
+        // Mostrar modal para crear (solo admin)
+        function showCreateModal() {
+            if (!isAdmin()) {
+                showAlert('Acceso Denegado', 'No tienes permisos para crear tutores', 'error');
+                return;
+            }
+            currentEditId = null;
+            document.getElementById('tutorForm').reset();
+            document.getElementById('modalTitle').innerText = 'Nuevo Tutor';
+            loadCompanies();
+            new bootstrap.Modal(document.getElementById('tutorModal')).show();
+        }
+        
+        // Editar tutor (solo admin)
+        async function editTutor(id) {
+            if (!isAdmin()) {
+                showAlert('Acceso Denegado', 'No tienes permisos para editar tutores', 'error');
+                return;
+            }
+            try {
+                const response = await TutorService.getById(id);
+                const tutor = response;
+                
+                currentEditId = id;
+                await loadCompanies();
+                
+                document.getElementById('tutorId').value = tutor.id;
+                document.getElementById('nombre').value = tutor.nombre;
+                document.getElementById('apellido').value = tutor.apellido;
+                document.getElementById('cedula').value = tutor.cedula;
+                document.getElementById('edad').value = tutor.edad;
+                document.getElementById('usuario').value = tutor.usuario;
+                document.getElementById('tipo').value = tutor.tipo;
+                document.getElementById('especialidad').value = tutor.especialidad || '';
+                document.getElementById('telefono').value = tutor.telefono;
+                document.getElementById('email').value = tutor.email;
+                document.getElementById('empresa_id').value = tutor.empresa_id || '';
+                document.getElementById('modalTitle').innerText = 'Editar Tutor';
+                new bootstrap.Modal(document.getElementById('tutorModal')).show();
+            } catch (error) {
+                showAlert('Error', 'Error al cargar tutor: ' + error.message, 'error');
+            }
+        }
+        
+        // Guardar tutor (solo admin)
+        async function saveTutor() {
+            if (!isAdmin()) {
+                showAlert('Acceso Denegado', 'No tienes permisos para guardar cambios', 'error');
+                return;
+            }
+            
+            const tutorData = {
+                nombre: document.getElementById('nombre').value,
+                apellido: document.getElementById('apellido').value,
+                cedula: document.getElementById('cedula').value,
+                edad: parseInt(document.getElementById('edad').value),
+                usuario: document.getElementById('usuario').value,
+                contraseña: document.getElementById('contraseña').value,
+                tipo: document.getElementById('tipo').value,
+                especialidad: document.getElementById('especialidad').value,
+                telefono: document.getElementById('telefono').value,
+                email: document.getElementById('email').value,
+                empresa_id: document.getElementById('empresa_id').value ? parseInt(document.getElementById('empresa_id').value) : null
+            };
+            
+            try {
+                if (currentEditId) {
+                    await TutorService.update(currentEditId, tutorData);
+                    showAlert('Actualizado', 'Tutor actualizado exitosamente', 'success');
+                } else {
+                    await TutorService.create(tutorData);
+                    showAlert('Creado', 'Tutor creado exitosamente', 'success');
+                }
+                
+                bootstrap.Modal.getInstance(document.getElementById('tutorModal')).hide();
+                initDataTable();
+            } catch (error) {
+                showAlert('Error', 'Error al guardar: ' + error.message, 'error');
+            }
+        }
+        
+        // Eliminar tutor (solo admin)
+        async function deleteTutor(id) {
+            if (!isAdmin()) {
+                showAlert('Acceso Denegado', 'No tienes permisos para eliminar tutores', 'error');
+                return;
+            }
+            
+            const result = await Swal.fire({
+                title: '¿Estás seguro?',
+                text: "Esta acción no se puede deshacer",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e74c3c',
+                cancelButtonColor: '#e67e22',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            });
+            
+            if (result.isConfirmed) {
+                try {
+                    await TutorService.delete(id);
+                    showAlert('Eliminado', 'Tutor eliminado exitosamente', 'success');
+                    initDataTable();
+                } catch (error) {
+                    showAlert('Error', 'Error al eliminar: ' + error.message, 'error');
+                }
+            }
+        }
+        
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
+        
+        // Toggle sidebar
+        document.getElementById('toggleSidebar').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('closed');
+            document.getElementById('mainContent').classList.toggle('expanded');
+        });
+        
+        // Inicializar al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSidebarMenu();
+            initDataTable();
+        });
+    </script>
+</body>
+</html>

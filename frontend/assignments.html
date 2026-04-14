@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InternSys - Asignaciones</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; }
+        .sidebar { position: fixed; top: 0; left: 0; width: 260px; height: 100%; background: #1e2a3a; color: white; transition: all 0.3s; z-index: 1000; overflow-y: auto; }
+        .sidebar.closed { margin-left: -260px; }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #2c3e50; }
+        .sidebar-header h4 i { margin-right: 10px; color: #3498db; }
+        .sidebar-menu { list-style: none; padding: 0; margin-top: 20px; }
+        .sidebar-menu .menu-item { display: block; padding: 12px 20px; color: #ecf0f1; text-decoration: none; transition: 0.3s; }
+        .sidebar-menu .menu-item:hover, .sidebar-menu .menu-item.active { background: #3498db; color: white; }
+        .sidebar-menu .menu-item i { width: 25px; margin-right: 10px; }
+        .main-content { margin-left: 260px; transition: 0.3s; min-height: 100vh; }
+        .main-content.expanded { margin-left: 0; }
+        .navbar { padding: 0.75rem 1.5rem; background: #3498db; color: white; }
+        .navbar .btn-light { background: white; border: none; border-radius: 8px; padding: 8px 12px; }
+        .table-container { background: white; border-radius: 10px; padding: 20px; margin-top: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+        .btn-add { background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 5px; margin-bottom: 20px; cursor: pointer; }
+        .btn-edit { background: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 5px; margin-right: 5px; cursor: pointer; }
+        .btn-delete { background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        .btn-refresh { background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; margin-bottom: 20px; margin-left: 10px; cursor: pointer; }
+        .badge-active { background: #27ae60; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; }
+        .badge-finished { background: #95a5a6; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; }
+        .badge-cancelled { background: #e74c3c; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; }
+        @media (max-width: 768px) { .sidebar { margin-left: -260px; } .main-content { margin-left: 0; } }
+    </style>
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h4><i class="fas fa-graduation-cap"></i> InternSys</h4>
+            <small>Administrador</small>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="dashboard-admin.html" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="students.html" class="menu-item"><i class="fas fa-user-graduate"></i> Estudiantes</a></li>
+            <li><a href="companies.html" class="menu-item"><i class="fas fa-building"></i> Empresas</a></li>
+            <li><a href="tutors.html" class="menu-item"><i class="fas fa-chalkboard-user"></i> Tutores</a></li>
+            <li><a href="offers.html" class="menu-item"><i class="fas fa-briefcase"></i> Ofertas</a></li>
+            <li><a href="assignments.html" class="menu-item active"><i class="fas fa-handshake"></i> Asignaciones</a></li>
+            <li><a href="users.html" class="menu-item"><i class="fas fa-users"></i> Usuarios</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <nav class="navbar">
+            <div class="container-fluid">
+                <button class="btn btn-light" id="toggleSidebar"><i class="fas fa-bars"></i></button>
+                <span class="navbar-brand mb-0 h4">Gestión de Asignaciones</span>
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-user"></i> <span id="userName">Admin</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="my-profile.html"><i class="fas fa-user-edit"></i> Mi Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="cerrarSesion()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container-fluid mt-4">
+            <div>
+                <button class="btn-add" onclick="showCreateModal()"><i class="fas fa-plus"></i> Nueva Asignación</button>
+                <button class="btn-refresh" onclick="refreshData()"><i class="fas fa-sync-alt"></i> Refrescar</button>
+            </div>
+            <div class="table-container">
+                <table id="assignmentsTable" class="table table-striped table-bordered" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Estudiante</th>
+                            <th>Oferta</th>
+                            <th>Tutor</th>
+                            <th>Fecha Inicio</th>
+                            <th>Fecha Fin</th>
+                            <th>Estado</th>
+                            <th>Horas</th>
+                            <th>Acciones</th>
+                        </thead>
+                    <tbody>
+                        <!-- Los datos se cargan dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Crear/Editar Asignación -->
+    <div class="modal fade" id="assignmentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalTitle">Nueva Asignación</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="assignmentForm">
+                        <input type="hidden" id="assignmentId">
+                        <div class="mb-3">
+                            <label>Estudiante *</label>
+                            <select class="form-control" id="student_id" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label>Oferta *</label>
+                            <select class="form-control" id="offer_id" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label>Tutor *</label>
+                            <select class="form-control" id="tutor_id" required></select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label>Fecha Inicio *</label>
+                                    <input type="date" class="form-control" id="start_date" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label>Fecha Fin *</label>
+                                    <input type="date" class="form-control" id="end_date" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label>Horas Totales *</label>
+                                    <input type="number" class="form-control" id="total_hours" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label>Estado</label>
+                                    <select class="form-control" id="status">
+                                        <option value="activo">Activo</option>
+                                        <option value="finalizado">Finalizado</option>
+                                        <option value="cancelado">Cancelado</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label>Horario</label>
+                            <input type="text" class="form-control" id="schedule" placeholder="Ej: Lunes a Viernes 8:00 - 12:00">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveAssignment()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/services/api.js"></script>
+
+    <script>
+        let assignmentsTable;
+        let currentEditId = null;
+
+        // ============================================
+        // FUNCIONES DE UTILIDAD
+        // ============================================
+        
+        function getCurrentUser() {
+            const user = localStorage.getItem('internsys_user');
+            return user ? JSON.parse(user) : null;
+        }
+        
+        function cerrarSesion() {
+            localStorage.removeItem('internsys_user');
+            window.location.href = 'index.html';
+        }
+        
+        function showAlert(title, message, type = 'success') {
+            Swal.fire({
+                title: title,
+                text: message,
+                icon: type,
+                confirmButtonColor: '#3498db',
+                timer: 2000,
+                timerProgressBar: true
+            });
+        }
+        
+        // ============================================
+        // CARGAR SELECTORES
+        // ============================================
+        
+        async function loadSelects() {
+            try {
+                // Cargar estudiantes
+                const studentsRes = await StudentService.getAll();
+                const students = studentsRes.result || [];
+                const studentSelect = document.getElementById('student_id');
+                studentSelect.innerHTML = '<option value="">Seleccione un estudiante...</option>';
+                students.forEach(s => {
+                    studentSelect.innerHTML += `<option value="${s.id}">${s.nombre} ${s.apellido} (${s.matricula})</option>`;
+                });
+                
+                // Cargar ofertas
+                const offersRes = await OfferService.getAll();
+                const offers = offersRes.result || [];
+                const offerSelect = document.getElementById('offer_id');
+                offerSelect.innerHTML = '<option value="">Seleccione una oferta...</option>';
+                offers.forEach(o => {
+                    offerSelect.innerHTML += `<option value="${o.id}">${o.title || o.titulo} (${o.available_positions || o.vacantes} vacantes)</option>`;
+                });
+                
+                // Cargar tutores
+                const tutorsRes = await TutorService.getAll();
+                const tutors = tutorsRes.result || [];
+                const tutorSelect = document.getElementById('tutor_id');
+                tutorSelect.innerHTML = '<option value="">Seleccione un tutor...</option>';
+                tutors.forEach(t => {
+                    tutorSelect.innerHTML += `<option value="${t.id}">${t.nombre} ${t.apellido} (${t.tipo || 'Tutor'})</option>`;
+                });
+                
+                console.log('Selectores cargados correctamente');
+                
+            } catch (error) {
+                console.error('Error loading selects:', error);
+                showAlert('Error', 'Error al cargar los datos: ' + error.message, 'error');
+            }
+        }
+        
+        // ============================================
+        // DATATABLE DE ASIGNACIONES
+        // ============================================
+        
+        async function initDataTable() {
+            try {
+                const user = getCurrentUser();
+                if (!user || user.rol !== 'admin') {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                
+                document.getElementById('userName').innerText = user.nombre || 'Admin';
+                
+                // Obtener asignaciones con JOIN desde el backend
+                const response = await AssignmentService.getAll();
+                const assignments = response.result || [];
+                
+                console.log('Asignaciones recibidas:', assignments);
+                
+                const data = assignments.map(a => {
+                    let estadoBadge = '';
+                    if (a.status === 'activo') estadoBadge = '<span class="badge-active">Activo</span>';
+                    else if (a.status === 'finalizado') estadoBadge = '<span class="badge-finished">Finalizado</span>';
+                    else estadoBadge = '<span class="badge-cancelled">Cancelado</span>';
+                    
+                    return [
+                        a.id,
+                        a.student_nombre || 'No asignado',
+                        a.offer_title || 'Sin título',
+                        a.tutor_nombre || 'No asignado',
+                        a.start_date || '-',
+                        a.end_date || '-',
+                        estadoBadge,
+                        `${a.completed_hours || 0}/${a.total_hours || 0}`,
+                        `<button class="btn-edit" onclick="editAssignment(${a.id})"><i class="fas fa-edit"></i> Editar</button>
+                         <button class="btn-delete" onclick="deleteAssignment(${a.id})"><i class="fas fa-trash"></i> Eliminar</button>`
+                    ];
+                });
+                
+                if (assignmentsTable) assignmentsTable.destroy();
+                
+                assignmentsTable = $('#assignmentsTable').DataTable({
+                    data: data,
+                    columns: [
+                        { title: "ID" },
+                        { title: "Estudiante" },
+                        { title: "Oferta" },
+                        { title: "Tutor" },
+                        { title: "Fecha Inicio" },
+                        { title: "Fecha Fin" },
+                        { title: "Estado" },
+                        { title: "Horas" },
+                        { title: "Acciones", orderable: false }
+                    ],
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+                    },
+                    pageLength: 10,
+                    lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "Todos"]],
+                    order: [[0, 'desc']],
+                    responsive: true
+                });
+                
+                console.log('DataTable inicializada correctamente');
+                
+            } catch (error) {
+                console.error('Error en initDataTable:', error);
+                $('#assignmentsTable tbody').html(`<tr><td colspan="9" class="text-center text-danger">Error al cargar: ${error.message}</td></tr>`);
+                showAlert('Error', 'Error al cargar asignaciones: ' + error.message, 'error');
+            }
+        }
+        
+        // ============================================
+        // CRUD DE ASIGNACIONES
+        // ============================================
+        
+        async function refreshData() {
+            await initDataTable();
+            showAlert('Actualizado', 'Datos actualizados correctamente', 'success');
+        }
+        
+        function showCreateModal() {
+            currentEditId = null;
+            document.getElementById('assignmentForm').reset();
+            document.getElementById('modalTitle').innerText = 'Nueva Asignación';
+            loadSelects();
+            new bootstrap.Modal(document.getElementById('assignmentModal')).show();
+        }
+        
+        async function editAssignment(id) {
+            try {
+                const response = await AssignmentService.getById(id);
+                const assignment = response;
+                
+                currentEditId = id;
+                await loadSelects();
+                
+                document.getElementById('student_id').value = assignment.student_id || '';
+                document.getElementById('offer_id').value = assignment.internship_offer_id || '';
+                document.getElementById('tutor_id').value = assignment.tutor_id || '';
+                document.getElementById('start_date').value = assignment.start_date || '';
+                document.getElementById('end_date').value = assignment.end_date || '';
+                document.getElementById('total_hours').value = assignment.total_hours || 0;
+                document.getElementById('status').value = assignment.status || 'activo';
+                document.getElementById('schedule').value = assignment.schedule || '';
+                document.getElementById('modalTitle').innerText = 'Editar Asignación';
+                
+                new bootstrap.Modal(document.getElementById('assignmentModal')).show();
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error', 'Error al cargar la asignación: ' + error.message, 'error');
+            }
+        }
+        
+        async function saveAssignment() {
+            // Validar campos requeridos
+            const studentId = document.getElementById('student_id').value;
+            const offerId = document.getElementById('offer_id').value;
+            const tutorId = document.getElementById('tutor_id').value;
+            const startDate = document.getElementById('start_date').value;
+            const endDate = document.getElementById('end_date').value;
+            const totalHours = document.getElementById('total_hours').value;
+            
+            if (!studentId) {
+                showAlert('Error', 'Debe seleccionar un estudiante', 'error');
+                return;
+            }
+            if (!offerId) {
+                showAlert('Error', 'Debe seleccionar una oferta', 'error');
+                return;
+            }
+            if (!tutorId) {
+                showAlert('Error', 'Debe seleccionar un tutor', 'error');
+                return;
+            }
+            if (!startDate) {
+                showAlert('Error', 'Debe ingresar una fecha de inicio', 'error');
+                return;
+            }
+            if (!endDate) {
+                showAlert('Error', 'Debe ingresar una fecha de fin', 'error');
+                return;
+            }
+            if (!totalHours || totalHours <= 0) {
+                showAlert('Error', 'Las horas totales deben ser mayor a 0', 'error');
+                return;
+            }
+            
+            const assignmentData = {
+                student_id: parseInt(studentId),
+                internship_offer_id: parseInt(offerId),
+                tutor_id: parseInt(tutorId),
+                start_date: startDate,
+                end_date: endDate,
+                total_hours: parseInt(totalHours),
+                status: document.getElementById('status').value,
+                schedule: document.getElementById('schedule').value || null,
+                assignment_date: new Date().toISOString().split('T')[0],
+                completed_hours: 0
+            };
+            
+            console.log('Datos a guardar:', assignmentData);
+            
+            try {
+                if (currentEditId) {
+                    await AssignmentService.update(currentEditId, assignmentData);
+                    showAlert('Actualizado', 'Asignación actualizada exitosamente', 'success');
+                } else {
+                    await AssignmentService.create(assignmentData);
+                    showAlert('Creada', 'Asignación creada exitosamente', 'success');
+                }
+                
+                bootstrap.Modal.getInstance(document.getElementById('assignmentModal')).hide();
+                await initDataTable();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error', 'Error al guardar: ' + error.message, 'error');
+            }
+        }
+        
+        async function deleteAssignment(id) {
+            const result = await Swal.fire({
+                title: '¿Estás seguro?',
+                text: "Esta acción no se puede deshacer",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e74c3c',
+                cancelButtonColor: '#3498db',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            });
+            
+            if (result.isConfirmed) {
+                try {
+                    await AssignmentService.delete(id);
+                    showAlert('Eliminada', 'Asignación eliminada exitosamente', 'success');
+                    await initDataTable();
+                } catch (error) {
+                    console.error('Error:', error);
+                    showAlert('Error', 'Error al eliminar: ' + error.message, 'error');
+                }
+            }
+        }
+        
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
+        
+        // Toggle sidebar
+        document.getElementById('toggleSidebar').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('closed');
+            document.getElementById('mainContent').classList.toggle('expanded');
+        });
+        
+        // Inicializar al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            initDataTable();
+        });
+    </script>
+</body>
+</html>

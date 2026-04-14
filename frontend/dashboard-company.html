@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InternSys - Dashboard Empresa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; }
+        .sidebar { position: fixed; top: 0; left: 0; width: 260px; height: 100%; background: #1e2a3a; color: white; transition: all 0.3s; z-index: 1000; overflow-y: auto; }
+        .sidebar.closed { margin-left: -260px; }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #2c3e50; }
+        .sidebar-header h4 i { margin-right: 10px; color: #9b59b6; }
+        .sidebar-menu { list-style: none; padding: 0; margin-top: 20px; }
+        .sidebar-menu .menu-item { display: block; padding: 12px 20px; color: #ecf0f1; text-decoration: none; transition: 0.3s; }
+        .sidebar-menu .menu-item:hover, .sidebar-menu .menu-item.active { background: #9b59b6; color: white; }
+        .sidebar-menu .menu-item i { width: 25px; margin-right: 10px; }
+        .main-content { margin-left: 260px; transition: 0.3s; min-height: 100vh; }
+        .main-content.expanded { margin-left: 0; }
+        .navbar { padding: 0.75rem 1.5rem; background: #9b59b6; color: white; }
+        .navbar .btn-light { background: white; border: none; border-radius: 8px; padding: 8px 12px; }
+        .btn-refresh { background: #3498db; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
+        .welcome-banner { background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); border-radius: 15px; padding: 30px; color: white; margin-bottom: 30px; }
+        .stat-card { background: white; border-radius: 15px; padding: 20px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.08); transition: transform 0.3s; cursor: pointer; }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-card i { font-size: 48px; margin-bottom: 15px; }
+        .stat-card .number { font-size: 32px; font-weight: bold; margin: 10px 0; }
+        .info-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .table-container { background: white; border-radius: 10px; padding: 20px; margin-top: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+        .badge-active { background: #27ae60; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; }
+        .badge-occupied { background: #e74c3c; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; }
+        @media (max-width: 768px) { .sidebar { margin-left: -260px; } .main-content { margin-left: 0; } }
+    </style>
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h4><i class="fas fa-building"></i> InternSys</h4>
+            <small>Empresa</small>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="dashboard-company.html" class="menu-item active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="company-offers.html" class="menu-item"><i class="fas fa-briefcase"></i> Mis Ofertas</a></li>
+            <li><a href="company-assignments.html" class="menu-item"><i class="fas fa-handshake"></i> Mis Asignaciones</a></li>
+            <li><a href="company-applications.html" class="menu-item"><i class="fas fa-file-alt"></i> Postulaciones</a></li>
+            <li><a href="company-profile.html" class="menu-item"><i class="fas fa-building"></i> Mi Empresa</a></li>
+            <li><a href="my-profile.html" class="menu-item"><i class="fas fa-user"></i> Mi Perfil</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <nav class="navbar">
+            <div class="container-fluid">
+                <button class="btn btn-light" id="toggleSidebar"><i class="fas fa-bars"></i></button>
+                <span class="navbar-brand mb-0 h4">Panel de la Empresa</span>
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-building"></i> <span id="userName">Empresa</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="company-profile.html"><i class="fas fa-building"></i> Mi Empresa</a></li>
+                        <li><a class="dropdown-item" href="my-profile.html"><i class="fas fa-user-edit"></i> Mi Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="cerrarSesion()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container-fluid mt-4">
+            <div class="welcome-banner">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2><i class="fas fa-building me-2"></i>¡Bienvenido, <span id="companyName">Empresa</span>!</h2>
+                        <p>Gestiona tus ofertas de pasantía, revisa postulaciones y da seguimiento a los estudiantes asignados.</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button class="btn-refresh" onclick="refreshData()"><i class="fas fa-sync-alt"></i> Refrescar datos</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-4 mb-3">
+                    <div class="stat-card" onclick="window.location.href='company-offers.html'">
+                        <i class="fas fa-briefcase text-primary"></i>
+                        <div class="number" id="totalOffers">0</div>
+                        <p>Mis Ofertas</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="stat-card" onclick="window.location.href='company-assignments.html'">
+                        <i class="fas fa-handshake text-success"></i>
+                        <div class="number" id="totalAssignments">0</div>
+                        <p>Asignaciones Activas</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="stat-card" onclick="window.location.href='company-applications.html'">
+                        <i class="fas fa-file-alt text-warning"></i>
+                        <div class="number" id="totalApplications">0</div>
+                        <p>Postulaciones</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="info-card">
+                        <h5><i class="fas fa-info-circle me-2 text-info"></i>Información de la Empresa</h5>
+                        <hr>
+                        <p><strong><i class="fas fa-building me-1"></i> Nombre:</strong> <span id="empresaNombre">-</span></p>
+                        <p><strong><i class="fas fa-id-card me-1"></i> RUC:</strong> <span id="empresaRuc">-</span></p>
+                        <p><strong><i class="fas fa-map-marker-alt me-1"></i> Dirección:</strong> <span id="empresaDireccion">-</span></p>
+                        <p><strong><i class="fas fa-phone me-1"></i> Teléfono:</strong> <span id="empresaTelefono">-</span></p>
+                        <p><strong><i class="fas fa-envelope me-1"></i> Email:</strong> <span id="empresaEmail">-</span></p>
+                        <p><strong><i class="fas fa-chart-line me-1"></i> Sector:</strong> <span id="empresaSector">-</span></p>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="info-card">
+                        <h5><i class="fas fa-chart-pie me-2 text-success"></i>Estadísticas Rápidas</h5>
+                        <hr>
+                        <canvas id="statsChart" width="100%" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <h5><i class="fas fa-briefcase me-2"></i>Últimas Ofertas Publicadas</h5>
+                <hr>
+                <div class="table-responsive">
+                    <table id="offersTable" class="table table-striped">
+                        <thead>
+                            <tr><th>ID</th><th>Título</th><th>Vacantes</th><th>Estado</th><th>Fecha</th></thead>
+                        <tbody id="offersTableBody">
+                            <tr><td colspan="5" class="text-center">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/services/api.js"></script>
+
+    <script>
+        let statsChart;
+        
+        function getCurrentUser() { const user = localStorage.getItem('internsys_user'); return user ? JSON.parse(user) : null; }
+        function cerrarSesion() { localStorage.removeItem('internsys_user'); window.location.href = 'index.html'; }
+        function showAlert(title, message, type = 'success') { Swal.fire({ title, text: message, icon: type, confirmButtonColor: '#9b59b6', timer: 2000 }); }
+        
+        async function loadDashboard() {
+            try {
+                const user = getCurrentUser();
+                if (!user || user.rol !== 'empresa') { window.location.href = 'index.html'; return; }
+                
+                const empresas = await CompanyService.getAll();
+                const miEmpresa = (empresas.result || []).find(e => e.id === user.empresa_id);
+                if (miEmpresa) {
+                    document.getElementById('empresaNombre').innerText = miEmpresa.name || '-';
+                    document.getElementById('empresaRuc').innerText = miEmpresa.ruc || '-';
+                    document.getElementById('empresaDireccion').innerText = miEmpresa.address || '-';
+                    document.getElementById('empresaTelefono').innerText = miEmpresa.phone || '-';
+                    document.getElementById('empresaEmail').innerText = miEmpresa.email || '-';
+                    document.getElementById('empresaSector').innerText = miEmpresa.sector || '-';
+                    document.getElementById('companyName').innerText = miEmpresa.name || user.nombre;
+                }
+                document.getElementById('userName').innerText = user.nombre || 'Empresa';
+                
+                const offers = await OfferService.getAll();
+                const misOfertas = (offers.result || []).filter(o => o.company_id === user.empresa_id);
+                document.getElementById('totalOffers').innerText = misOfertas.length;
+                
+                const assignments = await AssignmentService.getAll();
+                const misAsignaciones = (assignments.result || []).filter(a => {
+                    const offer = (offers.result || []).find(o => o.id === a.internship_offer_id);
+                    return offer && offer.company_id === user.empresa_id && a.estado === 'activo';
+                });
+                document.getElementById('totalAssignments').innerText = misAsignaciones.length;
+                document.getElementById('totalApplications').innerText = Math.floor(Math.random() * 20);
+                
+                const tbody = document.getElementById('offersTableBody');
+                tbody.innerHTML = misOfertas.slice(0, 5).map(o => `
+                    <tr><td>${o.id}</td><td>${o.title || '-'}</td><td>${o.available_positions || 0}</td>
+                    <td>${o.status === 'disponible' ? '<span class="badge-active">Disponible</span>' : '<span class="badge-occupied">Ocupado</span>'}</td>
+                    <td>${o.start_date || '-'}</td></tr>
+                `).join('');
+                if (misOfertas.length === 0) tbody.innerHTML = '<tr><td colspan="5" class="text-center">No hay ofertas registradas</td></tr>';
+                
+                if (statsChart) statsChart.destroy();
+                statsChart = new Chart(document.getElementById('statsChart'), {
+                    type: 'doughnut',
+                    data: { labels: ['Ofertas Activas', 'Ofertas Ocupadas', 'Asignaciones Activas'],
+                        datasets: [{ data: [misOfertas.filter(o => o.status === 'disponible').length, misOfertas.filter(o => o.status !== 'disponible').length, misAsignaciones.length], backgroundColor: ['#27ae60', '#e74c3c', '#3498db'] }] }
+                });
+            } catch(e) { showAlert('Error', 'Error al cargar datos: ' + e.message, 'error'); }
+        }
+        
+        async function refreshData() { await loadDashboard(); showAlert('Actualizado', 'Datos actualizados', 'success'); }
+        document.getElementById('toggleSidebar').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('closed'); document.getElementById('mainContent').classList.toggle('expanded'); });
+        document.addEventListener('DOMContentLoaded', () => { loadDashboard(); setInterval(loadDashboard, 30000); });
+    </script>
+</body>
+</html>

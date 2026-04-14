@@ -4,7 +4,18 @@ from datetime import datetime
 
 class User(BaseModel):
     id: Optional[int] = None
+    nombre: str
+    apellido: str
+    cedula: str
+    edad: int
+    usuario: str
+    contraseña: str
+    rol: str
     email: str
-    password_hash: str
-    role: str
-    created_at: Optional[datetime] = None
+    is_active: bool = True
+    last_login: Optional[datetime] = None
+    empresa_id: Optional[int] = None
+    # Campos adicionales para tutores
+    telefono: Optional[str] = None
+    tipo: Optional[str] = None
+    especialidad: Optional[str] = None

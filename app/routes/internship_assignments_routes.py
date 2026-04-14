@@ -1,47 +1,37 @@
 from fastapi import APIRouter, HTTPException
-from controllers.internship_assignments_controller import *
-from models.internship_assignment_model import InternshipAssignment
+from controllers.internship_assignments_controller import InternshipAssignmentController
+from models.internship_assignments_model import InternshipAssignment
 
 router = APIRouter()
 
-nueva_assignment = InternshipAssignmentsController()
+internship_assignment_controller = InternshipAssignmentController()
 
-@router.post("/create_internship_assignment")
-async def create_internship_assignment(assignment: InternshipAssignment):
-    rpta = nueva_assignment.create_assignment(assignment)
+@router.post("/create_assignment")
+async def create_assignment(assignment: InternshipAssignment):
+    rpta = internship_assignment_controller.create_assignment(assignment)
     return rpta
 
-@router.get("/get_internship_assignment/{assignment_id}", response_model=InternshipAssignment)
-async def get_internship_assignment(assignment_id: int):
-    rpta = nueva_assignment.get_assignment(assignment_id)
+@router.get("/get_assignment/{assignment_id}", response_model=InternshipAssignment)
+async def get_assignment(assignment_id: int):
+    rpta = internship_assignment_controller.get_assignment(assignment_id)
     return rpta
 
-@router.get("/get_internship_assignments/")
-async def get_internship_assignments():
-    rpta = nueva_assignment.get_assignments()
+@router.get("/get_assignments/")
+async def get_assignments():
+    rpta = internship_assignment_controller.get_assignments()
     return rpta
 
-@router.get("/get_internship_assignments_by_student/{student_id}")
-async def get_internship_assignments_by_student(student_id: int):
-    rpta = nueva_assignment.get_assignments_by_student(student_id)
+@router.get("/get_assignments_by_student/{student_id}")
+async def get_assignments_by_student(student_id: int):
+    rpta = internship_assignment_controller.get_assignments_by_student(student_id)
     return rpta
 
-@router.get("/get_internship_assignments_by_tutor/{tutor_id}")
-async def get_internship_assignments_by_tutor(tutor_id: int):
-    rpta = nueva_assignment.get_assignments_by_tutor(tutor_id)
+@router.put("/update_assignment/{assignment_id}")
+async def update_assignment(assignment_id: int, assignment: InternshipAssignment):
+    rpta = internship_assignment_controller.update_assignment(assignment_id, assignment)
     return rpta
 
-@router.put("/update_internship_assignment/{assignment_id}")
-async def update_internship_assignment(assignment_id: int, assignment: InternshipAssignment):
-    rpta = nueva_assignment.update_assignment(assignment_id, assignment)
-    return rpta
-
-@router.put("/complete_internship_assignment/{assignment_id}")
-async def complete_internship_assignment(assignment_id: int, grade: float, observations: str):
-    rpta = nueva_assignment.complete_assignment(assignment_id, grade, observations)
-    return rpta
-
-@router.delete("/delete_internship_assignment/{assignment_id}")
-async def delete_internship_assignment(assignment_id: int):
-    rpta = nueva_assignment.delete_assignment(assignment_id)
+@router.delete("/delete_assignment/{assignment_id}")
+async def delete_assignment(assignment_id: int):
+    rpta = internship_assignment_controller.delete_assignment(assignment_id)
     return rpta

@@ -1,9 +1,13 @@
 from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime
+from datetime import date
 
 class Report(BaseModel):
     id: Optional[int] = None
-    student_name: str
-    file_url: str
-    submission_date: Optional[datetime] = None
+    generated_by: int
+    report_type: str
+    title: str
+    content_json: Optional[str] = None
+    generated_date: date
+    file_url: Optional[str] = None
+    filters_used: Optional[str] = None

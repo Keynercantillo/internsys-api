@@ -4,7 +4,10 @@ from datetime import datetime
 
 class Notification(BaseModel):
     id: Optional[int] = None
-    user_email: str
+    user_id: int
+    title: str
     message: str
-    is_read: bool = False
+    type: str
+    read: bool = False
     created_at: Optional[datetime] = None
+    link_url: Optional[str] = None

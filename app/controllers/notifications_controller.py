@@ -1,8 +1,9 @@
-import mysql
+import psycopg2
 from fastapi import HTTPException
 from config.db_config import get_db_connection
 from models.notification_model import Notification
 from fastapi.encoders import jsonable_encoder
+from datetime import datetime
 
 class NotificationsController:
         
@@ -10,11 +11,18 @@ class NotificationsController:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO notifications (user_email, message, is_read, created_at) VALUES (%s, %s, %s, %s)", (notification.user_email, notification.message, notification.is_read, notification.created_at))
+            if notification.created_at is None:
+                notification.created_at = datetime.now()
+            cursor.execute(
+                """INSERT INTO notifications (user_id, title, message, type, read, created_at, link_url) 
+                   VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+                (notification.user_id, notification.title, notification.message, notification.type,
+                 notification.read, notification.created_at, notification.link_url)
+            )
             conn.commit()
             conn.close()
             return {"result": "Notification created"}
-        except mysql.connector.Error as err:
+        except psycopg2.Error as err:
             if conn:
                 conn.rollback()
             raise HTTPException(status_code=500, detail=str(err))
@@ -24,27 +32,28 @@ class NotificationsController:
             except:
                 pass
         
-
     def get_notification(self, notification_id: int):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT id, user_email, message, is_read, created_at FROM notifications WHERE id = %s", (notification_id,))
+            cursor.execute("SELECT id, user_id, title, message, type, read, created_at, link_url FROM notifications WHERE id = %s", (notification_id,))
             result = cursor.fetchone()
             if not result:
                raise HTTPException(status_code=404, detail="Notification not found")  
 
-            content={
-                    'id':int(result[0]),
-                    'user_email':result[1],
-                    'message':result[2],
-                    'is_read':bool(result[3]),
-                    'created_at':result[4]
+            content = {
+                'id': int(result[0]),
+                'user_id': result[1],
+                'title': result[2],
+                'message': result[3],
+                'type': result[4],
+                'read': result[5],
+                'created_at': result[6],
+                'link_url': result[7]
             }
             json_data = jsonable_encoder(content)            
             return json_data
-                
-        except mysql.connector.Error as err:
+        except psycopg2.Error as err:
             if conn:
                 conn.rollback()
             raise HTTPException(status_code=500, detail=str(err))
@@ -58,16 +67,19 @@ class NotificationsController:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT id, user_email, message, is_read, created_at FROM notifications")
+            cursor.execute("SELECT id, user_id, title, message, type, read, created_at, link_url FROM notifications")
             result = cursor.fetchall()
             payload = []
             for data in result:
-                content={
-                    'id':data[0],
-                    'user_email':data[1],
-                    'message':data[2],
-                    'is_read':data[3],
-                    'created_at':data[4]
+                content = {
+                    'id': data[0],
+                    'user_id': data[1],
+                    'title': data[2],
+                    'message': data[3],
+                    'type': data[4],
+                    'read': data[5],
+                    'created_at': data[6],
+                    'link_url': data[7]
                 }
                 payload.append(content)
             json_data = jsonable_encoder(payload)        
@@ -75,8 +87,7 @@ class NotificationsController:
                return {"result": json_data}
             else:
                 raise HTTPException(status_code=404, detail="Notifications not found")  
-                
-        except mysql.connector.Error as err:
+        except psycopg2.Error as err:
             if conn:
                 conn.rollback()
             raise HTTPException(status_code=500, detail=str(err))
@@ -86,98 +97,31 @@ class NotificationsController:
             except:
                 pass
     
-    def get_notifications_by_user(self, user_email: str):
+    def get_notifications_by_user(self, user_id: int):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT id, user_email, message, is_read, created_at FROM notifications WHERE user_email = %s ORDER BY created_at DESC", (user_email,))
+            cursor.execute("SELECT id, user_id, title, message, type, read, created_at, link_url FROM notifications WHERE user_id = %s ORDER BY created_at DESC", (user_id,))
             result = cursor.fetchall()
             payload = []
             for data in result:
-                content={
-                    'id':data[0],
-                    'user_email':data[1],
-                    'message':data[2],
-                    'is_read':data[3],
-                    'created_at':data[4]
+                content = {
+                    'id': data[0],
+                    'user_id': data[1],
+                    'title': data[2],
+                    'message': data[3],
+                    'type': data[4],
+                    'read': data[5],
+                    'created_at': data[6],
+                    'link_url': data[7]
                 }
                 payload.append(content)
             json_data = jsonable_encoder(payload)        
             if result:
                return {"result": json_data}
             else:
-                raise HTTPException(status_code=404, detail="No notifications found for this user")  
-                
-        except mysql.connector.Error as err:
-            if conn:
-                conn.rollback()
-            raise HTTPException(status_code=500, detail=str(err))
-        finally:
-            try:
-                conn.close()
-            except:
-                pass
-    
-    def get_unread_notifications_by_user(self, user_email: str):
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT id, user_email, message, is_read, created_at FROM notifications WHERE user_email = %s AND is_read = FALSE ORDER BY created_at DESC", (user_email,))
-            result = cursor.fetchall()
-            payload = []
-            for data in result:
-                content={
-                    'id':data[0],
-                    'user_email':data[1],
-                    'message':data[2],
-                    'is_read':data[3],
-                    'created_at':data[4]
-                }
-                payload.append(content)
-            json_data = jsonable_encoder(payload)        
-            if result:
-               return {"result": json_data}
-            else:
-                raise HTTPException(status_code=404, detail="No unread notifications found for this user")  
-                
-        except mysql.connector.Error as err:
-            if conn:
-                conn.rollback()
-            raise HTTPException(status_code=500, detail=str(err))
-        finally:
-            try:
-                conn.close()
-            except:
-                pass
-    
-    def mark_as_read(self, notification_id: int):
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("UPDATE notifications SET is_read = TRUE WHERE id = %s", (notification_id,))
-            if cursor.rowcount == 0:
-                conn.rollback()
-                raise HTTPException(status_code=404, detail="Notification not found")
-            conn.commit()
-            return {"result": "Notification marked as read"}
-        except mysql.connector.Error as err:
-            if conn:
-                conn.rollback()
-            raise HTTPException(status_code=500, detail=str(err))
-        finally:
-            try:
-                conn.close()
-            except:
-                pass
-    
-    def mark_all_as_read(self, user_email: str):
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("UPDATE notifications SET is_read = TRUE WHERE user_email = %s AND is_read = FALSE", (user_email,))
-            conn.commit()
-            return {"result": f"{cursor.rowcount} notifications marked as read"}
-        except mysql.connector.Error as err:
+                raise HTTPException(status_code=404, detail=f"No notifications found for user {user_id}")  
+        except psycopg2.Error as err:
             if conn:
                 conn.rollback()
             raise HTTPException(status_code=500, detail=str(err))
@@ -192,15 +136,16 @@ class NotificationsController:
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute(
-                "UPDATE notifications SET user_email=%s, message=%s, is_read=%s, created_at=%s WHERE id=%s",
-                (notification.user_email, notification.message, notification.is_read, notification.created_at, notification_id),
+                """UPDATE notifications SET user_id=%s, title=%s, message=%s, type=%s, read=%s, created_at=%s, link_url=%s WHERE id=%s""",
+                (notification.user_id, notification.title, notification.message, notification.type,
+                 notification.read, notification.created_at, notification.link_url, notification_id),
             )
             if cursor.rowcount == 0:
                 conn.rollback()
                 raise HTTPException(status_code=404, detail="Notification not found")
             conn.commit()
             return {"result": "Notification updated"}
-        except mysql.connector.Error as err:
+        except psycopg2.Error as err:
             if conn:
                 conn.rollback()
             raise HTTPException(status_code=500, detail=str(err))
@@ -220,7 +165,7 @@ class NotificationsController:
                 raise HTTPException(status_code=404, detail="Notification not found")
             conn.commit()
             return {"result": "Notification deleted"}
-        except mysql.connector.Error as err:
+        except psycopg2.Error as err:
             if conn:
                 conn.rollback()
             raise HTTPException(status_code=500, detail=str(err))

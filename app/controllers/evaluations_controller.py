@@ -1,4 +1,4 @@
-import mysql
+import psycopg2
 from fastapi import HTTPException
 from config.db_config import get_db_connection
 from models.evaluation_model import Evaluation
@@ -10,11 +10,16 @@ class EvaluationsController:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO evaluations (student_name, score, comments) VALUES (%s, %s, %s)", (evaluation.student_name, evaluation.score, evaluation.comments))
+            cursor.execute(
+                """INSERT INTO evaluations (internship_assignment_id, evaluator_id, evaluation_type, score, comments, evaluation_date, criteria_json) 
+                   VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+                (evaluation.internship_assignment_id, evaluation.evaluator_id, evaluation.evaluation_type, 
+                 evaluation.score, evaluation.comments, evaluation.evaluation_date, evaluation.criteria_json)
+            )
             conn.commit()
             conn.close()
             return {"result": "Evaluation created"}
-        except mysql.connector.Error as err:
+        except psycopg2.Error as err:
             if conn:
                 conn.rollback()
             raise HTTPException(status_code=500, detail=str(err))
@@ -24,26 +29,28 @@ class EvaluationsController:
             except:
                 pass
         
-
     def get_evaluation(self, evaluation_id: int):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT id, student_name, score, comments FROM evaluations WHERE id = %s", (evaluation_id,))
+            cursor.execute("SELECT id, internship_assignment_id, evaluator_id, evaluation_type, score, comments, evaluation_date, criteria_json FROM evaluations WHERE id = %s", (evaluation_id,))
             result = cursor.fetchone()
             if not result:
                raise HTTPException(status_code=404, detail="Evaluation not found")  
 
-            content={
-                    'id':int(result[0]),
-                    'student_name':result[1],
-                    'score':float(result[2]) if result[2] else None,
-                    'comments':result[3]
+            content = {
+                'id': int(result[0]),
+                'internship_assignment_id': result[1],
+                'evaluator_id': result[2],
+                'evaluation_type': result[3],
+                'score': result[4],
+                'comments': result[5],
+                'evaluation_date': result[6],
+                'criteria_json': result[7]
             }
             json_data = jsonable_encoder(content)            
             return json_data
-                
-        except mysql.connector.Error as err:
+        except psycopg2.Error as err:
             if conn:
                 conn.rollback()
             raise HTTPException(status_code=500, detail=str(err))
@@ -57,15 +64,19 @@ class EvaluationsController:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT id, student_name, score, comments FROM evaluations")
+            cursor.execute("SELECT id, internship_assignment_id, evaluator_id, evaluation_type, score, comments, evaluation_date, criteria_json FROM evaluations")
             result = cursor.fetchall()
             payload = []
             for data in result:
-                content={
-                    'id':data[0],
-                    'student_name':data[1],
-                    'score':data[2],
-                    'comments':data[3]
+                content = {
+                    'id': data[0],
+                    'internship_assignment_id': data[1],
+                    'evaluator_id': data[2],
+                    'evaluation_type': data[3],
+                    'score': data[4],
+                    'comments': data[5],
+                    'evaluation_date': data[6],
+                    'criteria_json': data[7]
                 }
                 payload.append(content)
             json_data = jsonable_encoder(payload)        
@@ -73,8 +84,7 @@ class EvaluationsController:
                return {"result": json_data}
             else:
                 raise HTTPException(status_code=404, detail="Evaluations not found")  
-                
-        except mysql.connector.Error as err:
+        except psycopg2.Error as err:
             if conn:
                 conn.rollback()
             raise HTTPException(status_code=500, detail=str(err))
@@ -84,28 +94,36 @@ class EvaluationsController:
             except:
                 pass
     
-    def get_evaluations_by_student(self, student_name: str):
+    def get_evaluations_by_student(self, student_id: int):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT id, student_name, score, comments FROM evaluations WHERE student_name = %s", (student_name,))
+            cursor.execute("""
+                SELECT e.id, e.internship_assignment_id, e.evaluator_id, e.evaluation_type, e.score, e.comments, e.evaluation_date, e.criteria_json 
+                FROM evaluations e
+                JOIN internship_assignments ia ON e.internship_assignment_id = ia.id
+                WHERE ia.student_id = %s
+            """, (student_id,))
             result = cursor.fetchall()
             payload = []
             for data in result:
-                content={
-                    'id':data[0],
-                    'student_name':data[1],
-                    'score':data[2],
-                    'comments':data[3]
+                content = {
+                    'id': data[0],
+                    'internship_assignment_id': data[1],
+                    'evaluator_id': data[2],
+                    'evaluation_type': data[3],
+                    'score': data[4],
+                    'comments': data[5],
+                    'evaluation_date': data[6],
+                    'criteria_json': data[7]
                 }
                 payload.append(content)
             json_data = jsonable_encoder(payload)        
             if result:
                return {"result": json_data}
             else:
-                raise HTTPException(status_code=404, detail="No evaluations found for this student")  
-                
-        except mysql.connector.Error as err:
+                raise HTTPException(status_code=404, detail=f"No evaluations found for student {student_id}")  
+        except psycopg2.Error as err:
             if conn:
                 conn.rollback()
             raise HTTPException(status_code=500, detail=str(err))
@@ -120,15 +138,17 @@ class EvaluationsController:
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute(
-                "UPDATE evaluations SET student_name=%s, score=%s, comments=%s WHERE id=%s",
-                (evaluation.student_name, evaluation.score, evaluation.comments, evaluation_id),
+                """UPDATE evaluations SET internship_assignment_id=%s, evaluator_id=%s, evaluation_type=%s, 
+                   score=%s, comments=%s, evaluation_date=%s, criteria_json=%s WHERE id=%s""",
+                (evaluation.internship_assignment_id, evaluation.evaluator_id, evaluation.evaluation_type,
+                 evaluation.score, evaluation.comments, evaluation.evaluation_date, evaluation.criteria_json, evaluation_id),
             )
             if cursor.rowcount == 0:
                 conn.rollback()
                 raise HTTPException(status_code=404, detail="Evaluation not found")
             conn.commit()
             return {"result": "Evaluation updated"}
-        except mysql.connector.Error as err:
+        except psycopg2.Error as err:
             if conn:
                 conn.rollback()
             raise HTTPException(status_code=500, detail=str(err))
@@ -148,7 +168,7 @@ class EvaluationsController:
                 raise HTTPException(status_code=404, detail="Evaluation not found")
             conn.commit()
             return {"result": "Evaluation deleted"}
-        except mysql.connector.Error as err:
+        except psycopg2.Error as err:
             if conn:
                 conn.rollback()
             raise HTTPException(status_code=500, detail=str(err))

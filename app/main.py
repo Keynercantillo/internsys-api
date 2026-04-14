@@ -1,39 +1,50 @@
 from fastapi import FastAPI, Request
-from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, HTMLResponse
 import sys
 import os
 
-# Agregar el directorio actual al path para evitar errores de importación
+# Agregar el directorio actual al path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# Importar todas las rutas
+# ============================================
+# IMPORTAR TODOS LOS ROUTERS
+# ============================================
+from routes.users_routes import router as users_router
 from routes.students_routes import router as students_router
 from routes.companies_routes import router as companies_router
 from routes.tutors_routes import router as tutors_router
 from routes.internship_offers_routes import router as internship_offers_router
 from routes.internship_assignments_routes import router as internship_assignments_router
-from routes.users_routes import router as users_router
 from routes.agreements_routes import router as agreements_router
-from routes.followup_visits_routes import router as followup_visits_router
-from routes.reports_routes import router as reports_router
 from routes.evaluations_routes import router as evaluations_router
+from routes.followup_visits_routes import router as followup_visits_router
 from routes.notifications_routes import router as notifications_router
+from routes.profiles_routes import router as profiles_router
+from routes.reports_routes import router as reports_router
+from routes.auth_routes import router as auth_router
 
+# ============================================
+# CREAR APLICACIÓN FASTAPI
+# ============================================
 app = FastAPI(
-    title="Internship Management API",
+    title="InternSys API",
     description="API para gestión de prácticas profesionales",
-    version="1.0.0"
+    version="2.0.0"
 )
 
-# Configurar CORS
+# ============================================
+# CONFIGURACIÓN CORS
+# ============================================
 origins = [
     "http://localhost",
     "http://localhost:8000",
     "http://127.0.0.1",
     "http://127.0.0.1:8000",
+    "http://localhost:3000",
+    "http://localhost:5500",
+    "*"
 ]
 
 app.add_middleware(
@@ -44,65 +55,117 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configurar templates y archivos estáticos
-try:
-    templates = Jinja2Templates(directory="templates")
-    app.mount("/static", StaticFiles(directory="static"), name="static")
-except:
-    print("⚠️  Carpeta 'templates' o 'static' no encontrada. El HTML no estará disponible.")
+# ============================================
+# SERVIR FRONTEND ESTÁTICO
+# ============================================
 
-# Incluir todas las rutas de la API
+# Obtener la ruta absoluta al directorio frontend
+FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend")
+
+# Verificar si existe la carpeta frontend
+if os.path.exists(FRONTEND_DIR):
+    # Montar archivos estáticos (CSS, JS, assets)
+    app.mount("/css", StaticFiles(directory=os.path.join(FRONTEND_DIR, "css")), name="css")
+    app.mount("/js", StaticFiles(directory=os.path.join(FRONTEND_DIR, "js")), name="js")
+    app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIR, "assets")), name="assets")
+    
+    print(f"✅ Frontend encontrado en: {FRONTEND_DIR}")
+else:
+    print(f"⚠️ No se encontró la carpeta frontend en: {FRONTEND_DIR}")
+
+# Ruta para servir el index.html
+@app.get("/", response_class=HTMLResponse)
+async def serve_index():
+    index_path = os.path.join(FRONTEND_DIR, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return HTMLResponse("""
+    <html>
+        <head><title>InternSys</title></head>
+        <body>
+            <h1>InternSys API</h1>
+            <p>Frontend no encontrado. Asegúrate de tener la carpeta 'frontend' en el mismo nivel que 'app'.</p>
+            <p>Documentación API: <a href="/docs">/docs</a></p>
+        </body>
+    </html>
+    """)
+
+# Ruta para servir cualquier archivo HTML del frontend
+@app.get("/{html_file}")
+async def serve_html(html_file: str):
+    # Seguridad: solo permitir archivos .html
+    if not html_file.endswith('.html'):
+        return {"error": "Solo se permiten archivos HTML"}
+    
+    file_path = os.path.join(FRONTEND_DIR, html_file)
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    return HTMLResponse(f"<h1>404</h1><p>Archivo {html_file} no encontrado</p>", status_code=404)
+
+# ============================================
+# INCLUIR TODAS LAS RUTAS DE LA API
+# ============================================
+
+# Rutas de autenticación
+app.include_router(auth_router)
+
+# Rutas de recursos (con prefijo /api)
+app.include_router(users_router, prefix="/api", tags=["Users"])
 app.include_router(students_router, prefix="/api", tags=["Students"])
 app.include_router(companies_router, prefix="/api", tags=["Companies"])
 app.include_router(tutors_router, prefix="/api", tags=["Tutors"])
 app.include_router(internship_offers_router, prefix="/api", tags=["Internship Offers"])
 app.include_router(internship_assignments_router, prefix="/api", tags=["Internship Assignments"])
-app.include_router(users_router, prefix="/api", tags=["Users"])
 app.include_router(agreements_router, prefix="/api", tags=["Agreements"])
-app.include_router(followup_visits_router, prefix="/api", tags=["Follow-up Visits"])
-app.include_router(reports_router, prefix="/api", tags=["Reports"])
 app.include_router(evaluations_router, prefix="/api", tags=["Evaluations"])
+app.include_router(followup_visits_router, prefix="/api", tags=["Follow-up Visits"])
 app.include_router(notifications_router, prefix="/api", tags=["Notifications"])
+app.include_router(profiles_router, prefix="/api", tags=["Profiles"])
+app.include_router(reports_router, prefix="/api", tags=["Reports"])
 
-# Ruta principal para servir el HTML
-@app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
-    try:
-        return templates.TemplateResponse("index.html", {"request": request})
-    except:
-        return """
-        <html>
-            <head><title>API funcionando</title></head>
-            <body>
-                <h1>🚀 API funcionando correctamente</h1>
-                <p>El HTML no está configurado. Usa <a href="/docs">/docs</a> para ver la documentación.</p>
-            </body>
-        </html>
-        """
+# ============================================
+# RUTAS ADICIONALES DE LA API
+# ============================================
 
-# Ruta de health check
 @app.get("/health")
 async def health_check():
     return {
-        "status": "healthy", 
+        "status": "healthy",
         "message": "API funcionando correctamente",
-        "version": "1.0.0"
+        "version": "2.0.0"
     }
 
-# Ruta para ver todas las rutas disponibles
 @app.get("/routes")
 async def list_routes():
-    routes = []
+    routes_list = []
     for route in app.routes:
-        routes.append({
-            "path": route.path,
-            "name": route.name,
-            "methods": list(route.methods) if hasattr(route, "methods") else []
-        })
-    return {"routes": routes}
+        if hasattr(route, "methods") and route.methods:
+            routes_list.append({
+                "path": route.path,
+                "name": route.name,
+                "methods": list(route.methods)
+            })
+    return {
+        "total_routes": len(routes_list),
+        "routes": routes_list
+    }
+
+# ============================================
+# EJECUCIÓN DEL SERVIDOR
+# ============================================
 
 if __name__ == "__main__":
     import uvicorn
+    print("="*60)
+    print("🚀 InternSys API - Servidor Iniciado")
+    print("="*60)
+    print(f"📚 Documentación API: http://localhost:8000/docs")
+    print(f"🌐 Frontend: http://localhost:8000")
+    print(f"❤️ Health: http://localhost:8000/health")
+    print("="*60)
+    print("✨ Servidor corriendo con recarga automática")
+    print("="*60)
+    
     uvicorn.run(
         "main:app", 
         host="0.0.0.0", 

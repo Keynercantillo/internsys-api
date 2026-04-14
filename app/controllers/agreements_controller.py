@@ -1,4 +1,4 @@
-import mysql
+import psycopg2
 from fastapi import HTTPException
 from config.db_config import get_db_connection
 from models.agreement_model import Agreement
@@ -10,11 +10,16 @@ class AgreementsController:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO agreements (company_name, start_date, end_date, status) VALUES (%s, %s, %s, %s)", (agreement.company_name, agreement.start_date, agreement.end_date, agreement.status))
+            cursor.execute(
+                """INSERT INTO agreements (student_id, tutor_id, company_id, start_date, end_date, status, signed_date, file_url) 
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
+                (agreement.student_id, agreement.tutor_id, agreement.company_id, agreement.start_date, 
+                 agreement.end_date, agreement.status, agreement.signed_date, agreement.file_url)
+            )
             conn.commit()
             conn.close()
             return {"result": "Agreement created"}
-        except mysql.connector.Error as err:
+        except psycopg2.Error as err:
             if conn:
                 conn.rollback()
             raise HTTPException(status_code=500, detail=str(err))
@@ -24,27 +29,29 @@ class AgreementsController:
             except:
                 pass
         
-
     def get_agreement(self, agreement_id: int):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT id, company_name, start_date, end_date, status FROM agreements WHERE id = %s", (agreement_id,))
+            cursor.execute("SELECT id, student_id, tutor_id, company_id, start_date, end_date, status, signed_date, file_url FROM agreements WHERE id = %s", (agreement_id,))
             result = cursor.fetchone()
             if not result:
                raise HTTPException(status_code=404, detail="Agreement not found")  
 
-            content={
-                    'id':int(result[0]),
-                    'company_name':result[1],
-                    'start_date':result[2],
-                    'end_date':result[3],
-                    'status':result[4]
+            content = {
+                'id': int(result[0]),
+                'student_id': result[1],
+                'tutor_id': result[2],
+                'company_id': result[3],
+                'start_date': result[4],
+                'end_date': result[5],
+                'status': result[6],
+                'signed_date': result[7],
+                'file_url': result[8]
             }
             json_data = jsonable_encoder(content)            
             return json_data
-                
-        except mysql.connector.Error as err:
+        except psycopg2.Error as err:
             if conn:
                 conn.rollback()
             raise HTTPException(status_code=500, detail=str(err))
@@ -58,16 +65,20 @@ class AgreementsController:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT id, company_name, start_date, end_date, status FROM agreements")
+            cursor.execute("SELECT id, student_id, tutor_id, company_id, start_date, end_date, status, signed_date, file_url FROM agreements")
             result = cursor.fetchall()
             payload = []
             for data in result:
-                content={
-                    'id':data[0],
-                    'company_name':data[1],
-                    'start_date':data[2],
-                    'end_date':data[3],
-                    'status':data[4]
+                content = {
+                    'id': data[0],
+                    'student_id': data[1],
+                    'tutor_id': data[2],
+                    'company_id': data[3],
+                    'start_date': data[4],
+                    'end_date': data[5],
+                    'status': data[6],
+                    'signed_date': data[7],
+                    'file_url': data[8]
                 }
                 payload.append(content)
             json_data = jsonable_encoder(payload)        
@@ -75,8 +86,7 @@ class AgreementsController:
                return {"result": json_data}
             else:
                 raise HTTPException(status_code=404, detail="Agreements not found")  
-                
-        except mysql.connector.Error as err:
+        except psycopg2.Error as err:
             if conn:
                 conn.rollback()
             raise HTTPException(status_code=500, detail=str(err))
@@ -86,61 +96,32 @@ class AgreementsController:
             except:
                 pass
     
-    def get_agreements_by_company(self, company_name: str):
+    def get_agreements_by_student(self, student_id: int):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT id, company_name, start_date, end_date, status FROM agreements WHERE company_name = %s", (company_name,))
+            cursor.execute("SELECT id, student_id, tutor_id, company_id, start_date, end_date, status, signed_date, file_url FROM agreements WHERE student_id = %s", (student_id,))
             result = cursor.fetchall()
             payload = []
             for data in result:
-                content={
-                    'id':data[0],
-                    'company_name':data[1],
-                    'start_date':data[2],
-                    'end_date':data[3],
-                    'status':data[4]
+                content = {
+                    'id': data[0],
+                    'student_id': data[1],
+                    'tutor_id': data[2],
+                    'company_id': data[3],
+                    'start_date': data[4],
+                    'end_date': data[5],
+                    'status': data[6],
+                    'signed_date': data[7],
+                    'file_url': data[8]
                 }
                 payload.append(content)
             json_data = jsonable_encoder(payload)        
             if result:
                return {"result": json_data}
             else:
-                raise HTTPException(status_code=404, detail="No agreements found for this company")  
-                
-        except mysql.connector.Error as err:
-            if conn:
-                conn.rollback()
-            raise HTTPException(status_code=500, detail=str(err))
-        finally:
-            try:
-                conn.close()
-            except:
-                pass
-    
-    def get_active_agreements(self):
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT id, company_name, start_date, end_date, status FROM agreements WHERE status = 'active'")
-            result = cursor.fetchall()
-            payload = []
-            for data in result:
-                content={
-                    'id':data[0],
-                    'company_name':data[1],
-                    'start_date':data[2],
-                    'end_date':data[3],
-                    'status':data[4]
-                }
-                payload.append(content)
-            json_data = jsonable_encoder(payload)        
-            if result:
-               return {"result": json_data}
-            else:
-                raise HTTPException(status_code=404, detail="No active agreements found")  
-                
-        except mysql.connector.Error as err:
+                raise HTTPException(status_code=404, detail=f"No agreements found for student {student_id}")  
+        except psycopg2.Error as err:
             if conn:
                 conn.rollback()
             raise HTTPException(status_code=500, detail=str(err))
@@ -155,15 +136,17 @@ class AgreementsController:
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute(
-                "UPDATE agreements SET company_name=%s, start_date=%s, end_date=%s, status=%s WHERE id=%s",
-                (agreement.company_name, agreement.start_date, agreement.end_date, agreement.status, agreement_id),
+                """UPDATE agreements SET student_id=%s, tutor_id=%s, company_id=%s, start_date=%s, end_date=%s, 
+                   status=%s, signed_date=%s, file_url=%s WHERE id=%s""",
+                (agreement.student_id, agreement.tutor_id, agreement.company_id, agreement.start_date, 
+                 agreement.end_date, agreement.status, agreement.signed_date, agreement.file_url, agreement_id),
             )
             if cursor.rowcount == 0:
                 conn.rollback()
                 raise HTTPException(status_code=404, detail="Agreement not found")
             conn.commit()
             return {"result": "Agreement updated"}
-        except mysql.connector.Error as err:
+        except psycopg2.Error as err:
             if conn:
                 conn.rollback()
             raise HTTPException(status_code=500, detail=str(err))
@@ -183,7 +166,7 @@ class AgreementsController:
                 raise HTTPException(status_code=404, detail="Agreement not found")
             conn.commit()
             return {"result": "Agreement deleted"}
-        except mysql.connector.Error as err:
+        except psycopg2.Error as err:
             if conn:
                 conn.rollback()
             raise HTTPException(status_code=500, detail=str(err))

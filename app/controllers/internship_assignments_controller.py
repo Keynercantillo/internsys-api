@@ -1,20 +1,27 @@
-import mysql
+import psycopg2
 from fastapi import HTTPException
 from config.db_config import get_db_connection
-from models.internship_assignment_model import InternshipAssignment
+from models.internship_assignments_model import InternshipAssignment
 from fastapi.encoders import jsonable_encoder
 
-class InternshipAssignmentsController:
-        
+class InternshipAssignmentController:
+    
     def create_assignment(self, assignment: InternshipAssignment):   
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO internship_assignments (student_name, offer_title, tutor_name, process_status) VALUES (%s, %s, %s, %s)", (assignment.student_name, assignment.offer_title, assignment.tutor_name, assignment.process_status))
+            cursor.execute(
+                """INSERT INTO internship_assignments (student_id, internship_offer_id, tutor_id, assignment_date, start_date, end_date, status, schedule, total_hours, completed_hours) 
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+                (assignment.student_id, assignment.internship_offer_id, assignment.tutor_id, assignment.assignment_date,
+                 assignment.start_date, assignment.end_date, assignment.status, assignment.schedule, 
+                 assignment.total_hours, assignment.completed_hours)
+            )
+            new_id = cursor.fetchone()[0]
             conn.commit()
             conn.close()
-            return {"result": "Internship assignment created"}
-        except mysql.connector.Error as err:
+            return {"result": "Assignment created successfully", "id": new_id}
+        except psycopg2.Error as err:
             if conn:
                 conn.rollback()
             raise HTTPException(status_code=500, detail=str(err))
@@ -23,179 +30,189 @@ class InternshipAssignmentsController:
                 conn.close()
             except:
                 pass
-        
-
+    
     def get_assignment(self, assignment_id: int):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT id, student_name, offer_title, tutor_name, process_status FROM internship_assignments WHERE id = %s", (assignment_id,))
+            cursor.execute("""
+                SELECT 
+                    a.id, a.student_id, s.nombre as student_nombre, s.apellido as student_apellido,
+                    a.internship_offer_id, o.title as offer_title,
+                    a.tutor_id, t.nombre as tutor_nombre, t.apellido as tutor_apellido,
+                    a.assignment_date, a.start_date, a.end_date, a.status, a.schedule, a.total_hours, a.completed_hours
+                FROM internship_assignments a
+                LEFT JOIN students s ON a.student_id = s.id
+                LEFT JOIN internship_offers o ON a.internship_offer_id = o.id
+                LEFT JOIN tutors t ON a.tutor_id = t.id
+                WHERE a.id = %s
+            """, (assignment_id,))
             result = cursor.fetchone()
             if not result:
-               raise HTTPException(status_code=404, detail="Assignment not found")  
-
-            content={
-                    'id':int(result[0]),
-                    'student_name':result[1],
-                    'offer_title':result[2],
-                    'tutor_name':result[3],
-                    'process_status':result[4]
+                raise HTTPException(status_code=404, detail="Assignment not found")
+            
+            content = {
+                'id': result[0],
+                'student_id': result[1],
+                'student_nombre': f"{result[2]} {result[3]}" if result[2] else 'No asignado',
+                'internship_offer_id': result[4],
+                'offer_title': result[5] or 'Sin título',
+                'tutor_id': result[6],
+                'tutor_nombre': f"{result[7]} {result[8]}" if result[7] else 'No asignado',
+                'assignment_date': result[9],
+                'start_date': result[10],
+                'end_date': result[11],
+                'status': result[12] or 'activo',
+                'schedule': result[13],
+                'total_hours': result[14],
+                'completed_hours': result[15]
             }
-            json_data = jsonable_encoder(content)            
-            return json_data
-                
-        except mysql.connector.Error as err:
-            if conn:
-                conn.rollback()
+            conn.close()
+            return jsonable_encoder(content)
+        except psycopg2.Error as err:
             raise HTTPException(status_code=500, detail=str(err))
         finally:
             try:
                 conn.close()
             except:
                 pass
-       
+    
     def get_assignments(self):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT id, student_name, offer_title, tutor_name, process_status FROM internship_assignments")
+            cursor.execute("""
+                SELECT 
+                    a.id,
+                    a.student_id,
+                    s.nombre as student_nombre,
+                    s.apellido as student_apellido,
+                    a.internship_offer_id,
+                    o.title as offer_title,
+                    a.tutor_id,
+                    t.nombre as tutor_nombre,
+                    t.apellido as tutor_apellido,
+                    a.assignment_date,
+                    a.start_date,
+                    a.end_date,
+                    a.status,
+                    a.schedule,
+                    a.total_hours,
+                    a.completed_hours
+                FROM internship_assignments a
+                LEFT JOIN students s ON a.student_id = s.id
+                LEFT JOIN internship_offers o ON a.internship_offer_id = o.id
+                LEFT JOIN tutors t ON a.tutor_id = t.id
+                ORDER BY a.id DESC
+            """)
             result = cursor.fetchall()
             payload = []
             for data in result:
-                content={
-                    'id':data[0],
-                    'student_name':data[1],
-                    'offer_title':data[2],
-                    'tutor_name':data[3],
-                    'process_status':data[4]
+                content = {
+                    'id': data[0],
+                    'student_id': data[1],
+                    'student_nombre': f"{data[2]} {data[3]}" if data[2] else 'No asignado',
+                    'internship_offer_id': data[4],
+                    'offer_title': data[5] or 'Sin título',
+                    'tutor_id': data[6],
+                    'tutor_nombre': f"{data[7]} {data[8]}" if data[7] else 'No asignado',
+                    'assignment_date': data[9],
+                    'start_date': data[10],
+                    'end_date': data[11],
+                    'status': data[12] or 'activo',
+                    'schedule': data[13],
+                    'total_hours': data[14],
+                    'completed_hours': data[15]
                 }
                 payload.append(content)
-            json_data = jsonable_encoder(payload)        
-            if result:
-               return {"result": json_data}
-            else:
-                raise HTTPException(status_code=404, detail="Assignments not found")  
-                
-        except mysql.connector.Error as err:
-            if conn:
-                conn.rollback()
-            raise HTTPException(status_code=500, detail=str(err))
+            conn.close()
+            return {"result": jsonable_encoder(payload)}
+        except Exception as e:
+            print(f"Error en get_assignments: {e}")
+            return {"result": []}
         finally:
-            try:
+            if conn:
                 conn.close()
-            except:
-                pass
     
-    def get_assignments_by_student(self, student_name: str):
+    def get_assignments_by_student(self, student_id: int):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT id, student_name, offer_title, tutor_name, process_status FROM internship_assignments WHERE student_name = %s", (student_name,))
+            cursor.execute("""
+                SELECT 
+                    a.id,
+                    a.student_id,
+                    s.nombre as student_nombre,
+                    s.apellido as student_apellido,
+                    a.internship_offer_id,
+                    o.title as offer_title,
+                    a.tutor_id,
+                    t.nombre as tutor_nombre,
+                    t.apellido as tutor_apellido,
+                    a.assignment_date,
+                    a.start_date,
+                    a.end_date,
+                    a.status,
+                    a.schedule,
+                    a.total_hours,
+                    a.completed_hours
+                FROM internship_assignments a
+                LEFT JOIN students s ON a.student_id = s.id
+                LEFT JOIN internship_offers o ON a.internship_offer_id = o.id
+                LEFT JOIN tutors t ON a.tutor_id = t.id
+                WHERE a.student_id = %s
+                ORDER BY a.id DESC
+            """, (student_id,))
             result = cursor.fetchall()
             payload = []
             for data in result:
-                content={
-                    'id':data[0],
-                    'student_name':data[1],
-                    'offer_title':data[2],
-                    'tutor_name':data[3],
-                    'process_status':data[4]
+                content = {
+                    'id': data[0],
+                    'student_id': data[1],
+                    'student_nombre': f"{data[2]} {data[3]}" if data[2] else 'No asignado',
+                    'internship_offer_id': data[4],
+                    'offer_title': data[5] or 'Sin título',
+                    'tutor_id': data[6],
+                    'tutor_nombre': f"{data[7]} {data[8]}" if data[7] else 'No asignado',
+                    'assignment_date': data[9],
+                    'start_date': data[10],
+                    'end_date': data[11],
+                    'status': data[12] or 'activo',
+                    'schedule': data[13],
+                    'total_hours': data[14],
+                    'completed_hours': data[15]
                 }
                 payload.append(content)
-            json_data = jsonable_encoder(payload)        
-            if result:
-               return {"result": json_data}
-            else:
-                raise HTTPException(status_code=404, detail="No assignments found for this student")  
-                
-        except mysql.connector.Error as err:
-            if conn:
-                conn.rollback()
-            raise HTTPException(status_code=500, detail=str(err))
+            conn.close()
+            return {"result": jsonable_encoder(payload)}
+        except Exception as e:
+            print(f"Error en get_assignments_by_student: {e}")
+            return {"result": []}
         finally:
-            try:
-                conn.close()
-            except:
-                pass
-    
-    def get_assignments_by_tutor(self, tutor_name: str):
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT id, student_name, offer_title, tutor_name, process_status FROM internship_assignments WHERE tutor_name = %s", (tutor_name,))
-            result = cursor.fetchall()
-            payload = []
-            for data in result:
-                content={
-                    'id':data[0],
-                    'student_name':data[1],
-                    'offer_title':data[2],
-                    'tutor_name':data[3],
-                    'process_status':data[4]
-                }
-                payload.append(content)
-            json_data = jsonable_encoder(payload)        
-            if result:
-               return {"result": json_data}
-            else:
-                raise HTTPException(status_code=404, detail="No assignments found for this tutor")  
-                
-        except mysql.connector.Error as err:
             if conn:
-                conn.rollback()
-            raise HTTPException(status_code=500, detail=str(err))
-        finally:
-            try:
                 conn.close()
-            except:
-                pass
-    
-    def get_assignments_by_offer(self, offer_title: str):
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT id, student_name, offer_title, tutor_name, process_status FROM internship_assignments WHERE offer_title = %s", (offer_title,))
-            result = cursor.fetchall()
-            payload = []
-            for data in result:
-                content={
-                    'id':data[0],
-                    'student_name':data[1],
-                    'offer_title':data[2],
-                    'tutor_name':data[3],
-                    'process_status':data[4]
-                }
-                payload.append(content)
-            json_data = jsonable_encoder(payload)        
-            if result:
-               return {"result": json_data}
-            else:
-                raise HTTPException(status_code=404, detail="No assignments found for this offer")  
-                
-        except mysql.connector.Error as err:
-            if conn:
-                conn.rollback()
-            raise HTTPException(status_code=500, detail=str(err))
-        finally:
-            try:
-                conn.close()
-            except:
-                pass
     
     def update_assignment(self, assignment_id: int, assignment: InternshipAssignment):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute(
-                "UPDATE internship_assignments SET student_name=%s, offer_title=%s, tutor_name=%s, process_status=%s WHERE id=%s",
-                (assignment.student_name, assignment.offer_title, assignment.tutor_name, assignment.process_status, assignment_id),
+                """UPDATE internship_assignments 
+                   SET student_id=%s, internship_offer_id=%s, tutor_id=%s, 
+                       assignment_date=%s, start_date=%s, end_date=%s, status=%s, 
+                       schedule=%s, total_hours=%s, completed_hours=%s 
+                   WHERE id=%s""",
+                (assignment.student_id, assignment.internship_offer_id, assignment.tutor_id, 
+                 assignment.assignment_date, assignment.start_date, assignment.end_date, 
+                 assignment.status, assignment.schedule, assignment.total_hours, 
+                 assignment.completed_hours, assignment_id),
             )
             if cursor.rowcount == 0:
                 conn.rollback()
                 raise HTTPException(status_code=404, detail="Assignment not found")
             conn.commit()
-            return {"result": "Assignment updated"}
-        except mysql.connector.Error as err:
+            return {"result": "Assignment updated successfully"}
+        except psycopg2.Error as err:
             if conn:
                 conn.rollback()
             raise HTTPException(status_code=500, detail=str(err))
@@ -214,8 +231,8 @@ class InternshipAssignmentsController:
                 conn.rollback()
                 raise HTTPException(status_code=404, detail="Assignment not found")
             conn.commit()
-            return {"result": "Assignment deleted"}
-        except mysql.connector.Error as err:
+            return {"result": "Assignment deleted successfully"}
+        except psycopg2.Error as err:
             if conn:
                 conn.rollback()
             raise HTTPException(status_code=500, detail=str(err))

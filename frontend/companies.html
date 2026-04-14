@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InternSys - Empresas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100%;
+            background: #1e2a3a;
+            color: white;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        .sidebar.closed { margin-left: -260px; }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #2c3e50; }
+        .sidebar-menu { list-style: none; padding: 0; margin-top: 20px; }
+        .sidebar-menu .menu-item {
+            display: block;
+            padding: 12px 20px;
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+        .sidebar-menu .menu-item:hover, .sidebar-menu .menu-item.active {
+            background: #3498db;
+            color: white;
+        }
+        .sidebar-menu .menu-item i { width: 25px; margin-right: 10px; }
+        .main-content { margin-left: 260px; transition: 0.3s; min-height: 100vh; }
+        .main-content.expanded { margin-left: 0; }
+        .navbar { padding: 0.75rem 1.5rem; background: #3498db; color: white; }
+        .table-container { background: white; border-radius: 10px; padding: 20px; margin-top: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+        .btn-add { background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 5px; margin-bottom: 20px; cursor: pointer; }
+        .btn-edit { background: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 5px; margin-right: 5px; cursor: pointer; }
+        .btn-delete { background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        @media (max-width: 768px) {
+            .sidebar { margin-left: -260px; }
+            .sidebar.open { margin-left: 0; }
+            .main-content { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h4><i class="fas fa-graduation-cap"></i> InternSys</h4>
+            <small>Administrador</small>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="dashboard-admin.html" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="students.html" class="menu-item"><i class="fas fa-user-graduate"></i> Estudiantes</a></li>
+            <li><a href="companies.html" class="menu-item active"><i class="fas fa-building"></i> Empresas</a></li>
+            <li><a href="tutors.html" class="menu-item"><i class="fas fa-chalkboard-user"></i> Tutores</a></li>
+            <li><a href="offers.html" class="menu-item"><i class="fas fa-briefcase"></i> Ofertas</a></li>
+            <li><a href="assignments.html" class="menu-item"><i class="fas fa-handshake"></i> Asignaciones</a></li>
+            <li><a href="users.html" class="menu-item"><i class="fas fa-users"></i> Usuarios</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <nav class="navbar">
+            <div class="container-fluid">
+                <button class="btn btn-light" id="toggleSidebar"><i class="fas fa-bars"></i></button>
+                <span class="navbar-brand mb-0 h4">Gestión de Empresas</span>
+                <button class="btn btn-light" onclick="cerrarSesion()"><i class="fas fa-sign-out-alt"></i> Salir</button>
+            </div>
+        </nav>
+
+        <div class="container-fluid mt-4">
+            <button class="btn btn-add" onclick="showCreateModal()"><i class="fas fa-plus"></i> Nueva Empresa</button>
+            <div class="table-container">
+                <table id="companiesTable" class="table table-striped table-bordered" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>RUC</th>
+                            <th>Dirección</th>
+                            <th>Teléfono</th>
+                            <th>Email</th>
+                            <th>Contacto</th>
+                            <th>Acciones</th>
+                        </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="companyModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalTitle">Nueva Empresa</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="companyForm">
+                        <input type="hidden" id="companyId">
+                        <div class="mb-3"><label>Nombre *</label><input type="text" class="form-control" id="nombre" required></div>
+                        <div class="mb-3"><label>RUC *</label><input type="text" class="form-control" id="ruc" required></div>
+                        <div class="mb-3"><label>Dirección</label><input type="text" class="form-control" id="direccion"></div>
+                        <div class="mb-3"><label>Teléfono</label><input type="text" class="form-control" id="telefono"></div>
+                        <div class="mb-3"><label>Email</label><input type="email" class="form-control" id="email"></div>
+                        <div class="mb-3"><label>Contacto</label><input type="text" class="form-control" id="contacto"></div>
+                        <div class="mb-3"><label>Sector</label><input type="text" class="form-control" id="sector"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveCompany()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/services/api.js"></script>
+
+    <script>
+        let companiesTable;
+        let currentEditId = null;
+
+        function getCurrentUser() {
+            const user = localStorage.getItem('internsys_user');
+            return user ? JSON.parse(user) : null;
+        }
+
+        function cerrarSesion() {
+            localStorage.removeItem('internsys_user');
+            window.location.href = 'index.html';
+        }
+
+        function showAlert(title, message, type = 'success') {
+            Swal.fire({ title, text: message, icon: type, confirmButtonColor: '#3498db', timer: 2000 });
+        }
+
+        async function initDataTable() {
+            try {
+                const response = await CompanyService.getAll();
+                const companies = response.result || [];
+                
+                console.log('Empresas recibidas:', companies);
+                
+                const data = companies.map(c => [
+                    c.id,
+                    c.name || c.nombre || '',
+                    c.ruc || '',
+                    c.address || c.direccion || '-',
+                    c.phone || c.telefono || '-',
+                    c.email || '-',
+                    c.contact_person || c.contacto || '-',
+                    `<button class="btn-edit" onclick="editCompany(${c.id})"><i class="fas fa-edit"></i> Editar</button>
+                     <button class="btn-delete" onclick="deleteCompany(${c.id})"><i class="fas fa-trash"></i> Eliminar</button>`
+                ]);
+                
+                console.log('Datos preparados:', data);
+                
+                if (companiesTable) companiesTable.destroy();
+                
+                companiesTable = $('#companiesTable').DataTable({
+                    data: data,
+                    columns: [
+                        { title: "ID" },
+                        { title: "Nombre" },
+                        { title: "RUC" },
+                        { title: "Dirección" },
+                        { title: "Teléfono" },
+                        { title: "Email" },
+                        { title: "Contacto" },
+                        { title: "Acciones", orderable: false }
+                    ],
+                    language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' },
+                    pageLength: 10,
+                    order: [[0, 'desc']]
+                });
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error', 'Error al cargar empresas: ' + error.message, 'error');
+            }
+        }
+
+        function showCreateModal() {
+            currentEditId = null;
+            document.getElementById('companyForm').reset();
+            document.getElementById('modalTitle').innerText = 'Nueva Empresa';
+            new bootstrap.Modal(document.getElementById('companyModal')).show();
+        }
+
+        async function editCompany(id) {
+            try {
+                const response = await CompanyService.getById(id);
+                const company = response;
+                
+                currentEditId = id;
+                document.getElementById('nombre').value = company.name || company.nombre || '';
+                document.getElementById('ruc').value = company.ruc || '';
+                document.getElementById('direccion').value = company.address || company.direccion || '';
+                document.getElementById('telefono').value = company.phone || company.telefono || '';
+                document.getElementById('email').value = company.email || '';
+                document.getElementById('contacto').value = company.contact_person || company.contacto || '';
+                document.getElementById('sector').value = company.sector || '';
+                document.getElementById('modalTitle').innerText = 'Editar Empresa';
+                new bootstrap.Modal(document.getElementById('companyModal')).show();
+            } catch (error) {
+                showAlert('Error', 'Error al cargar empresa', 'error');
+            }
+        }
+
+        async function saveCompany() {
+            const companyData = {
+                name: document.getElementById('nombre').value,
+                ruc: document.getElementById('ruc').value,
+                address: document.getElementById('direccion').value,
+                phone: document.getElementById('telefono').value,
+                email: document.getElementById('email').value,
+                contact_person: document.getElementById('contacto').value,
+                sector: document.getElementById('sector').value,
+                status: 'activo'
+            };
+            
+            try {
+                if (currentEditId) {
+                    await CompanyService.update(currentEditId, companyData);
+                    showAlert('Actualizado', 'Empresa actualizada exitosamente', 'success');
+                } else {
+                    await CompanyService.create(companyData);
+                    showAlert('Creada', 'Empresa creada exitosamente', 'success');
+                }
+                bootstrap.Modal.getInstance(document.getElementById('companyModal')).hide();
+                initDataTable();
+            } catch (error) {
+                showAlert('Error', 'Error al guardar: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteCompany(id) {
+            const result = await Swal.fire({
+                title: '¿Estás seguro?', text: "Esta acción no se puede deshacer", icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#e74c3c', confirmButtonText: 'Sí, eliminar'
+            });
+            if (result.isConfirmed) {
+                try {
+                    await CompanyService.delete(id);
+                    showAlert('Eliminada', 'Empresa eliminada exitosamente', 'success');
+                    initDataTable();
+                } catch (error) {
+                    showAlert('Error', 'Error al eliminar: ' + error.message, 'error');
+                }
+            }
+        }
+
+        document.getElementById('toggleSidebar').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('closed');
+            document.getElementById('mainContent').classList.toggle('expanded');
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initDataTable();
+        });
+    </script>
+</body>
+</html>

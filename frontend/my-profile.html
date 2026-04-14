@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InternSys - Mi Perfil</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h4><i class="fas fa-graduation-cap"></i> InternSys</h4><small id="userRoleLabel">Usuario</small></div>
+        <ul class="sidebar-menu" id="sidebarMenu"></ul>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <nav class="navbar navbar-dark bg-primary">
+            <div class="container-fluid">
+                <button class="btn btn-light" id="toggleSidebar"><i class="fas fa-bars"></i></button>
+                <span class="navbar-brand mb-0 h4">Mi Perfil</span>
+                <button class="btn btn-light" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Salir</button>
+            </div>
+        </nav>
+
+        <div class="container-fluid mt-4">
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-user-circle fa-5x text-primary mb-3"></i>
+                            <h4 id="profileName">Cargando...</h4>
+                            <p class="text-muted" id="profileRole"></p>
+                            <hr>
+                            <button class="btn btn-outline-primary btn-sm" onclick="editProfile()"><i class="fas fa-edit"></i> Editar Perfil</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white"><h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Información Personal</h5></div>
+                        <div class="card-body">
+                            <form id="profileForm">
+                                <div class="row">
+                                    <div class="col-md-6"><div class="mb-3"><label>Nombre</label><input type="text" class="form-control" id="nombre" readonly></div></div>
+                                    <div class="col-md-6"><div class="mb-3"><label>Apellido</label><input type="text" class="form-control" id="apellido" readonly></div></div>
+                                    <div class="col-md-6"><div class="mb-3"><label>Cédula</label><input type="text" class="form-control" id="cedula" readonly></div></div>
+                                    <div class="col-md-6"><div class="mb-3"><label>Edad</label><input type="number" class="form-control" id="edad" readonly></div></div>
+                                    <div class="col-md-6"><div class="mb-3"><label>Email</label><input type="email" class="form-control" id="email" readonly></div></div>
+                                    <div class="col-md-6"><div class="mb-3"><label>Usuario</label><input type="text" class="form-control" id="usuario" readonly></div></div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/components/alert.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        function loadProfile(){
+            const user=getCurrentUser();
+            if(user){
+                document.getElementById('profileName').innerText=`${user.nombre} ${user.apellido}`;
+                document.getElementById('profileRole').innerText=user.rol==='estudiante'?'Estudiante':user.rol==='tutor'?'Tutor':'Administrador';
+                document.getElementById('userRoleLabel').innerText=user.rol;
+                document.getElementById('nombre').value=user.nombre||'';
+                document.getElementById('apellido').value=user.apellido||'';
+                document.getElementById('cedula').value=user.cedula||'';
+                document.getElementById('edad').value=user.edad||'';
+                document.getElementById('email').value=user.email||'';
+                document.getElementById('usuario').value=user.usuario||'';
+                loadSidebarMenu(user.rol);
+            }
+        }
+        function loadSidebarMenu(rol){
+            const menu=document.getElementById('sidebarMenu');
+            if(rol==='admin') menu.innerHTML=`<li><a href="dashboard-admin.html" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li><li><a href="students.html" class="menu-item"><i class="fas fa-user-graduate"></i> Estudiantes</a></li><li><a href="companies.html" class="menu-item"><i class="fas fa-building"></i> Empresas</a></li><li><a href="tutors.html" class="menu-item"><i class="fas fa-chalkboard-user"></i> Tutores</a></li><li><a href="my-profile.html" class="menu-item active"><i class="fas fa-user"></i> Mi Perfil</a></li>`;
+            else if(rol==='estudiante') menu.innerHTML=`<li><a href="dashboard-student.html" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li><li><a href="my-profile.html" class="menu-item active"><i class="fas fa-user"></i> Mi Perfil</a></li><li><a href="offers.html" class="menu-item"><i class="fas fa-briefcase"></i> Ofertas</a></li>`;
+            else menu.innerHTML=`<li><a href="dashboard-tutor.html" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li><li><a href="my-profile.html" class="menu-item active"><i class="fas fa-user"></i> Mi Perfil</a></li><li><a href="my-students.html" class="menu-item"><i class="fas fa-users"></i> Mis Estudiantes</a></li>`;
+        }
+        function editProfile(){ const inputs=document.querySelectorAll('#profileForm input'); const isReadonly=inputs[0].readOnly; inputs.forEach(i=>i.readOnly=!isReadonly); const btn=document.querySelector('.btn-outline-primary'); if(isReadonly){ btn.innerHTML='<i class="fas fa-save"></i> Guardar'; btn.classList.remove('btn-outline-primary'); btn.classList.add('btn-success'); AlertComponent.info('Modo edición activado'); } else { btn.innerHTML='<i class="fas fa-edit"></i> Editar Perfil'; btn.classList.remove('btn-success'); btn.classList.add('btn-outline-primary'); AlertComponent.success('Perfil actualizado'); } }
+        document.getElementById('toggleSidebar').addEventListener('click',function(){ document.getElementById('sidebar').classList.toggle('closed'); document.getElementById('mainContent').classList.toggle('expanded'); });
+        document.addEventListener('DOMContentLoaded',loadProfile);
+    </script>
+</body>
+</html>
