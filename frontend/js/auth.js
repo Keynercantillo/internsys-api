@@ -95,7 +95,7 @@ function showAlertMessage(message, type = 'success') {
             title: type === 'success' ? 'Éxito' : type === 'error' ? 'Error' : 'Información',
             text: message,
             icon: type,
-            confirmButtonColor: '#9b59b6',
+            confirmButtonColor: '#3498db',
             timer: 2000,
             timerProgressBar: true
         });
@@ -315,7 +315,7 @@ function checkAuth() {
     if (user.rol === 'estudiante') {
         if (currentPage.includes('dashboard-admin.html') || currentPage.includes('companies.html') || 
             currentPage.includes('tutors.html') || currentPage.includes('assignments.html') || 
-            currentPage.includes('users.html')) {
+            currentPage.includes('users.html') || currentPage.includes('reports.html')) {
             window.location.href = 'dashboard-student.html';
             return false;
         }
@@ -323,7 +323,8 @@ function checkAuth() {
     
     if (user.rol === 'tutor' || user.rol === 'docente') {
         if (currentPage.includes('dashboard-admin.html') || currentPage.includes('students.html') || 
-            currentPage.includes('companies.html') || currentPage.includes('users.html')) {
+            currentPage.includes('companies.html') || currentPage.includes('users.html') ||
+            currentPage.includes('reports.html')) {
             window.location.href = 'dashboard-tutor.html';
             return false;
         }
@@ -332,7 +333,8 @@ function checkAuth() {
     if (user.rol === 'empresa') {
         if (currentPage.includes('dashboard-admin.html') || currentPage.includes('students.html') || 
             currentPage.includes('tutors.html') || currentPage.includes('dashboard-student.html') ||
-            currentPage.includes('dashboard-tutor.html') || currentPage.includes('my-students.html')) {
+            currentPage.includes('dashboard-tutor.html') || currentPage.includes('my-students.html') ||
+            currentPage.includes('reports.html')) {
             window.location.href = 'dashboard-company.html';
             return false;
         }
@@ -353,7 +355,7 @@ function getToken() {
 }
 
 // ============================================
-// MENÚ LATERAL SEGÚN ROL
+// MENÚ LATERAL SEGÚN ROL (CON REPORTES PARA ADMIN)
 // ============================================
 
 function loadSidebarByRole() {
@@ -361,11 +363,16 @@ function loadSidebarByRole() {
     if (!user) return;
     
     const sidebarMenu = document.getElementById('sidebarMenu');
-    if (!sidebarMenu) return;
+    if (!sidebarMenu) {
+        console.warn('No se encontró el elemento sidebarMenu');
+        return;
+    }
     
     let menuItems = [];
     
-    // Menú para ADMIN
+    // ============================================
+    // MENÚ PARA ADMINISTRADOR (CON REPORTES)
+    // ============================================
     if (user.rol === 'admin') {
         menuItems = [
             { href: 'dashboard-admin.html', icon: 'fa-tachometer-alt', label: 'Dashboard' },
@@ -375,10 +382,13 @@ function loadSidebarByRole() {
             { href: 'offers.html', icon: 'fa-briefcase', label: 'Ofertas' },
             { href: 'assignments.html', icon: 'fa-handshake', label: 'Asignaciones' },
             { href: 'users.html', icon: 'fa-users', label: 'Usuarios' },
+            { href: 'reports.html', icon: 'fa-chart-line', label: 'Reportes' },
             { href: 'my-profile.html', icon: 'fa-user', label: 'Mi Perfil' }
         ];
     } 
-    // Menú para ESTUDIANTE
+    // ============================================
+    // MENÚ PARA ESTUDIANTE (SIN REPORTES)
+    // ============================================
     else if (user.rol === 'estudiante') {
         menuItems = [
             { href: 'dashboard-student.html', icon: 'fa-tachometer-alt', label: 'Mi Dashboard' },
@@ -388,7 +398,9 @@ function loadSidebarByRole() {
             { href: 'offers.html', icon: 'fa-briefcase', label: 'Ofertas' }
         ];
     }
-    // Menú para TUTOR y DOCENTE
+    // ============================================
+    // MENÚ PARA TUTOR Y DOCENTE (SIN REPORTES)
+    // ============================================
     else if (user.rol === 'tutor' || user.rol === 'docente') {
         menuItems = [
             { href: 'dashboard-tutor.html', icon: 'fa-tachometer-alt', label: 'Dashboard' },
@@ -398,7 +410,9 @@ function loadSidebarByRole() {
             { href: 'my-profile.html', icon: 'fa-user', label: 'Mi Perfil' }
         ];
     }
-    // Menú para EMPRESA
+    // ============================================
+    // MENÚ PARA EMPRESA (SIN REPORTES)
+    // ============================================
     else if (user.rol === 'empresa') {
         menuItems = [
             { href: 'dashboard-company.html', icon: 'fa-tachometer-alt', label: 'Dashboard' },
@@ -410,6 +424,7 @@ function loadSidebarByRole() {
         ];
     }
     
+    // Generar el HTML del menú
     sidebarMenu.innerHTML = menuItems.map(item => `
         <li>
             <a href="${item.href}" class="menu-item ${window.location.pathname.includes(item.href) ? 'active' : ''}">
@@ -417,6 +432,8 @@ function loadSidebarByRole() {
             </a>
         </li>
     `).join('');
+    
+    console.log('✅ Menú cargado para rol:', user.rol);
 }
 
 // ============================================
@@ -439,6 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = user.dashboard;
     }
     
+    // Cargar el menú lateral si existe el contenedor
     if (document.getElementById('sidebarMenu')) {
         loadSidebarByRole();
     }

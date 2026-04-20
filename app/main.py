@@ -64,10 +64,27 @@ FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__fi
 
 # Verificar si existe la carpeta frontend
 if os.path.exists(FRONTEND_DIR):
-    # Montar archivos estáticos (CSS, JS, assets)
-    app.mount("/css", StaticFiles(directory=os.path.join(FRONTEND_DIR, "css")), name="css")
-    app.mount("/js", StaticFiles(directory=os.path.join(FRONTEND_DIR, "js")), name="js")
-    app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIR, "assets")), name="assets")
+    # Montar archivos estáticos (CSS, JS, COMPONENTS, assets)
+    css_dir = os.path.join(FRONTEND_DIR, "css")
+    js_dir = os.path.join(FRONTEND_DIR, "js")
+    components_dir = os.path.join(FRONTEND_DIR, "components")
+    assets_dir = os.path.join(FRONTEND_DIR, "assets")
+    
+    if os.path.exists(css_dir):
+        app.mount("/css", StaticFiles(directory=css_dir), name="css")
+        print(f"✅ CSS montado en: {css_dir}")
+    
+    if os.path.exists(js_dir):
+        app.mount("/js", StaticFiles(directory=js_dir), name="js")
+        print(f"✅ JS montado en: {js_dir}")
+    
+    if os.path.exists(components_dir):
+        app.mount("/components", StaticFiles(directory=components_dir), name="components")
+        print(f"✅ Components montado en: {components_dir}")
+    
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+        print(f"✅ Assets montado en: {assets_dir}")
     
     print(f"✅ Frontend encontrado en: {FRONTEND_DIR}")
 else:

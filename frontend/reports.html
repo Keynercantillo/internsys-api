@@ -1,9 +1,446 @@
 <!DOCTYPE html>
-<html lang="es"><head><meta charset="UTF-8"><title>Reportes</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><link rel="stylesheet" href="css/styles.css"></head>
-<body><div class="sidebar" id="sidebar"><div class="sidebar-header"><h4><i class="fas fa-graduation-cap"></i> InternSys</h4><small>Admin</small></div><ul class="sidebar-menu"><li><a href="dashboard-admin.html" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li><li><a href="reports.html" class="menu-item active"><i class="fas fa-chart-line"></i> Reportes</a></li></ul></div>
-<div class="main-content" id="mainContent"><nav class="navbar navbar-dark bg-primary"><div class="container-fluid"><button class="btn btn-light" id="toggleSidebar"><i class="fas fa-bars"></i></button><span class="navbar-brand mb-0 h4">Reportes</span><button class="btn btn-light" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Salir</button></div></nav>
-<div class="container-fluid mt-4"><div class="row"><div class="col-md-6 mb-4"><div class="card"><div class="card-header bg-primary text-white"><h5 class="mb-0">Reporte de Estudiantes</h5></div><div class="card-body"><canvas id="studentsChart"></canvas><button class="btn btn-primary mt-3 w-100" onclick="generateReport('students')"><i class="fas fa-download"></i> Generar Reporte</button></div></div></div>
-<div class="col-md-6 mb-4"><div class="card"><div class="card-header bg-success text-white"><h5 class="mb-0">Reporte de Asignaciones</h5></div><div class="card-body"><canvas id="assignmentsChart"></canvas><button class="btn btn-success mt-3 w-100" onclick="generateReport('assignments')"><i class="fas fa-download"></i> Generar Reporte</button></div></div></div></div></div></div>
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="js/services/api.js"></script><script src="js/components/alert.js"></script><script src="js/auth.js"></script>
-<script>let studentsChart, assignmentsChart; async function loadCharts(){ try{ const students=await StudentService.getAll(); const assignments=await AssignmentService.getAll(); const carreras={}; (students.result||[]).forEach(s=>carreras[s.carrera]=(carreras[s.carrera]||0)+1); if(studentsChart) studentsChart.destroy(); studentsChart=new Chart(document.getElementById('studentsChart'),{ type:'bar', data:{ labels:Object.keys(carreras), datasets:[{ label:'Estudiantes por Carrera', data:Object.values(carreras), backgroundColor:'#3498db' }] } }); const estados={ activo:0, finalizado:0, cancelado:0 }; (assignments.result||[]).forEach(a=>estados[a.estado]=(estados[a.estado]||0)+1); if(assignmentsChart) assignmentsChart.destroy(); assignmentsChart=new Chart(document.getElementById('assignmentsChart'),{ type:'pie', data:{ labels:['Activo','Finalizado','Cancelado'], datasets:[{ data:[estados.activo,estados.finalizado,estados.cancelado], backgroundColor:['#27ae60','#3498db','#e74c3c'] }] } }); } catch(e){ AlertComponent.error('Error al cargar gráficos'); } } function generateReport(type){ AlertComponent.success(`Reporte de ${type} generado`); } document.getElementById('toggleSidebar').addEventListener('click',function(){ document.getElementById('sidebar').classList.toggle('closed'); document.getElementById('mainContent').classList.toggle('expanded'); }); document.addEventListener('DOMContentLoaded',loadCharts);</script>
-</body></html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InternSys - Módulo Reportes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    
+    <!-- Librería para generar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- Importar componentes web -->
+    <script src="components/main-components.js" type="module"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; }
+        
+        .sidebar { position: fixed; top: 0; left: 0; width: 260px; height: 100%; background: #1e2a3a; color: white; transition: 0.3s; z-index: 1000; overflow-y: auto; }
+        .sidebar.closed { margin-left: -260px; }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #2c3e50; }
+        .sidebar-header h4 i { margin-right: 10px; color: #3498db; }
+        .sidebar-menu { list-style: none; padding: 0; margin-top: 20px; }
+        .sidebar-menu .menu-item { display: block; padding: 12px 20px; color: #ecf0f1; text-decoration: none; transition: 0.3s; }
+        .sidebar-menu .menu-item:hover, .sidebar-menu .menu-item.active { background: #3498db; color: white; }
+        .sidebar-menu .menu-item i { width: 25px; margin-right: 10px; }
+        
+        .main-content { margin-left: 260px; transition: 0.3s; min-height: 100vh; }
+        .main-content.expanded { margin-left: 0; }
+        .navbar { padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #3498db, #2980b9); color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        
+        .filters-card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .filters-card h4 { margin-bottom: 20px; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 15px; }
+        .filter-group { margin-bottom: 15px; }
+        .filter-group label { font-weight: 600; margin-bottom: 8px; display: block; color: #555; }
+        .filter-group select, .filter-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        
+        .btn-generate { background: linear-gradient(135deg, #27ae60, #229954); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(39,174,96,0.4); }
+        .btn-clear { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s; margin-left: 10px; }
+        .btn-clear:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(231,76,60,0.4); }
+        
+        .results-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .results-card h4 { margin-bottom: 20px; color: #2c3e50; border-left: 4px solid #27ae60; padding-left: 15px; }
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #3498db; color: white; padding: 12px; text-align: left; }
+        td { padding: 10px 12px; border-bottom: 1px solid #eee; }
+        tr:hover { background: #f8f9fa; }
+        
+        .pdf-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .pdf-header h1 { color: #2c3e50; margin: 0; }
+        .pdf-header p { color: #7f8c8d; margin: 5px 0; }
+        .pdf-footer { text-align: center; margin-top: 30px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 12px; color: #7f8c8d; }
+        .pdf-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .pdf-table th { background: #3498db; color: white; padding: 10px; }
+        .pdf-table td { padding: 8px; border-bottom: 1px solid #ddd; }
+        
+        .denied-container { display: flex; justify-content: center; align-items: center; min-height: 80vh; }
+        .denied-card { background: white; border-radius: 12px; padding: 40px; text-align: center; max-width: 500px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .denied-card i { font-size: 80px; color: #e74c3c; margin-bottom: 20px; }
+        .denied-card h2 { color: #2c3e50; margin-bottom: 10px; }
+        .denied-card p { color: #7f8c8d; margin-bottom: 20px; }
+        
+        @media (max-width: 768px) { .sidebar { margin-left: -260px; } .main-content { margin-left: 0; } }
+    </style>
+</head>
+<body>
+    <div id="adminContent">
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header"><h4><i class="fas fa-graduation-cap"></i> InternSys</h4><small>Administrador</small></div>
+            <ul class="sidebar-menu">
+                <li><a href="dashboard-admin.html" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="students.html" class="menu-item"><i class="fas fa-user-graduate"></i> Estudiantes</a></li>
+                <li><a href="companies.html" class="menu-item"><i class="fas fa-building"></i> Empresas</a></li>
+                <li><a href="tutors.html" class="menu-item"><i class="fas fa-chalkboard-user"></i> Tutores</a></li>
+                <li><a href="offers.html" class="menu-item"><i class="fas fa-briefcase"></i> Ofertas</a></li>
+                <li><a href="assignments.html" class="menu-item"><i class="fas fa-handshake"></i> Asignaciones</a></li>
+                <li><a href="users.html" class="menu-item"><i class="fas fa-users"></i> Usuarios</a></li>
+                <li><a href="reports.html" class="menu-item active"><i class="fas fa-chart-line"></i> Reportes</a></li>
+                <li><a href="my-profile.html" class="menu-item"><i class="fas fa-user"></i> Mi Perfil</a></li>
+            </ul>
+        </div>
+
+        <div class="main-content" id="mainContent">
+            <nav class="navbar">
+                <div class="container-fluid">
+                    <button class="btn btn-light" id="toggleSidebar"><i class="fas fa-bars"></i></button>
+                    <span class="navbar-brand mb-0 h4">Módulo de Reportes</span>
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-user"></i> <span id="userName">Admin</span></button>
+                        <ul class="dropdown-menu"><li><a class="dropdown-item" href="my-profile.html">Mi Perfil</a></li><li><hr class="dropdown-divider"></li><li><a class="dropdown-item text-danger" href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li></ul>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="container-fluid mt-4">
+                <!-- Panel de Filtros - 3 parámetros (Carrera, Estado, Nombre) -->
+                <div class="filters-card">
+                    <h4><i class="fas fa-filter me-2"></i>Filtros de Búsqueda</h4>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="filter-group">
+                                <label><i class="fas fa-graduation-cap me-1"></i> Carrera</label>
+                                <select id="filterCarrera" class="form-control">
+                                    <option value="">Todas las carreras</option>
+                                    <option value="Ingeniería de Sistemas">Ingeniería de Sistemas</option>
+                                    <option value="Ingeniería Civil">Ingeniería Civil</option>
+                                    <option value="Administración">Administración</option>
+                                    <option value="Contaduría">Contaduría</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="filter-group">
+                                <label><i class="fas fa-chart-line me-1"></i> Estado</label>
+                                <select id="filterEstado" class="form-control">
+                                    <option value="">Todos los estados</option>
+                                    <option value="activo">Activo</option>
+                                    <option value="finalizado">Finalizado</option>
+                                    <option value="cancelado">Cancelado</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="filter-group">
+                                <label><i class="fas fa-search me-1"></i> Buscar por Nombre</label>
+                                <input type="text" id="filterNombre" class="form-control" placeholder="Escribe el nombre del estudiante...">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-end mt-3">
+                        <button class="btn-generate" onclick="generarReporte()">
+                            <i class="fas fa-file-pdf me-2"></i> Generar Reporte PDF
+                        </button>
+                        <button class="btn-clear" onclick="limpiarFiltros()">
+                            <i class="fas fa-eraser me-2"></i> Limpiar Filtros
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Vista previa de resultados -->
+                <div class="results-card">
+                    <h4><i class="fas fa-table me-2"></i>Resultados</h4>
+                    <div id="resultadosContainer">
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-chart-bar fa-3x mb-3"></i>
+                            <p>Seleccione filtros y haga clic en "Generar Reporte"</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="deniedContent" style="display: none;">
+        <div class="denied-container">
+            <div class="denied-card">
+                <i class="fas fa-lock"></i>
+                <h2>Acceso Denegado</h2>
+                <p>Esta sección es solo para administradores.</p>
+                <button class="btn btn-primary" onclick="window.location.href='index.html'">Volver al Inicio</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="pdfContent" style="display: none; padding: 20px;">
+        <div id="pdfHTML"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/services/api.js"></script>
+    <script src="js/auth.js"></script>
+    
+    <script>
+        let reportData = [];
+        
+        function getCurrentUser() { 
+            const user = localStorage.getItem('internsys_user'); 
+            return user ? JSON.parse(user) : null; 
+        }
+        
+        function cerrarSesion() { 
+            localStorage.removeItem('internsys_user'); 
+            window.location.href = 'index.html'; 
+        }
+        
+        function showAlert(message, type = 'success') {
+            Swal.fire({
+                title: type === 'success' ? 'Éxito' : type === 'error' ? 'Error' : 'Información',
+                text: message,
+                icon: type,
+                confirmButtonColor: '#3498db',
+                timer: 2000,
+                timerProgressBar: true
+            });
+        }
+        
+        function verificarAcceso() {
+            const user = getCurrentUser();
+            if (!user || user.rol !== 'admin') {
+                document.getElementById('adminContent').style.display = 'none';
+                document.getElementById('deniedContent').style.display = 'block';
+                return false;
+            }
+            document.getElementById('adminContent').style.display = 'block';
+            document.getElementById('deniedContent').style.display = 'none';
+            return true;
+        }
+        
+        async function cargarDatos() {
+            try {
+                const estudiantes = await StudentService.getAll();
+                const asignaciones = await AssignmentService.getAll();
+                const ofertas = await OfferService.getAll();
+                const empresas = await CompanyService.getAll();
+                const tutores = await TutorService.getAll();
+                
+                const empresaMap = {};
+                (empresas.result || []).forEach(e => empresaMap[e.id] = e.name);
+                
+                const ofertaMap = {};
+                (ofertas.result || []).forEach(o => ofertaMap[o.id] = o.title);
+                
+                const tutorMap = {};
+                (tutores.result || []).forEach(t => tutorMap[t.id] = `${t.nombre} ${t.apellido}`);
+                
+                reportData = (estudiantes.result || []).map(s => {
+                    const misAsignaciones = (asignaciones.result || []).filter(a => a.student_id === s.id);
+                    const asignacionActiva = misAsignaciones.find(a => a.status === 'activo');
+                    
+                    return {
+                        id: s.id,
+                        nombre: s.nombre,
+                        apellido: s.apellido,
+                        nombreCompleto: `${s.nombre} ${s.apellido}`,
+                        cedula: s.cedula,
+                        carrera: s.carrera,
+                        semester: s.semester,
+                        promedio: s.promedio || 'N/A',
+                        estado: s.estado || 'activo',
+                        oferta: asignacionActiva ? ofertaMap[asignacionActiva.internship_offer_id] : 'Sin asignación',
+                        empresa: asignacionActiva ? empresaMap[ofertas.result?.find(o => o.id === asignacionActiva.internship_offer_id)?.company_id] : '-',
+                        tutor: asignacionActiva ? tutorMap[asignacionActiva.tutor_id] : '-'
+                    };
+                });
+                
+                mostrarVistaPrevia(reportData);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error al cargar los datos: ' + error.message, 'error');
+            }
+        }
+        
+        function mostrarVistaPrevia(data) {
+            const container = document.getElementById('resultadosContainer');
+            
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="text-center py-5 text-muted"><i class="fas fa-inbox fa-3x mb-3"></i><p>No hay datos disponibles</p></div>';
+                return;
+            }
+            
+            let html = '<div class="table-responsive">';
+            html += '<table class="table table-striped">';
+            html += '<thead><tr>';
+            html += '<th>ID</th><th>Nombre</th><th>Carrera</th><th>Semestre</th><th>Promedio</th><th>Oferta</th><th>Empresa</th><th>Tutor</th><th>Estado</th>';
+            html += '<tr></thead><tbody>';
+            
+            data.forEach(item => {
+                html += '<tr>';
+                html += `<td>${item.id}</td>`;
+                html += `<td>${item.nombre} ${item.apellido}</td>`;
+                html += `<td>${item.carrera}</td>`;
+                html += `<td>${item.semester}</td>`;
+                html += `<td>${item.promedio}</td>`;
+                html += `<td>${item.oferta}</td>`;
+                html += `<td>${item.empresa}</td>`;
+                html += `<td>${item.tutor}</td>`;
+                html += `<td><span class="badge bg-${item.estado === 'activo' ? 'success' : 'secondary'}">${item.estado}</span></td>`;
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table></div>';
+            html += `<div class="text-end mt-3"><small class="text-muted">Total registros: ${data.length}</small></div>`;
+            
+            container.innerHTML = html;
+        }
+        
+        function aplicarFiltros() {
+            const carrera = document.getElementById('filterCarrera').value;
+            const estado = document.getElementById('filterEstado').value;
+            const nombre = document.getElementById('filterNombre').value.toLowerCase();
+            
+            let datosFiltrados = [...reportData];
+            
+            if (carrera) {
+                datosFiltrados = datosFiltrados.filter(item => item.carrera === carrera);
+            }
+            
+            if (estado) {
+                datosFiltrados = datosFiltrados.filter(item => item.estado === estado);
+            }
+            
+            if (nombre) {
+                datosFiltrados = datosFiltrados.filter(item => 
+                    item.nombre.toLowerCase().includes(nombre) || 
+                    item.apellido.toLowerCase().includes(nombre) ||
+                    item.nombreCompleto.toLowerCase().includes(nombre)
+                );
+            }
+            
+            mostrarVistaPrevia(datosFiltrados);
+            return datosFiltrados;
+        }
+        
+        function limpiarFiltros() {
+            document.getElementById('filterCarrera').value = '';
+            document.getElementById('filterEstado').value = '';
+            document.getElementById('filterNombre').value = '';
+            mostrarVistaPrevia(reportData);
+            showAlert('Filtros limpiados', 'info');
+        }
+        
+        function generarReporte() {
+            const carrera = document.getElementById('filterCarrera').value;
+            const estado = document.getElementById('filterEstado').value;
+            const nombre = document.getElementById('filterNombre').value.toLowerCase();
+            
+            let datosFiltrados = [...reportData];
+            
+            if (carrera) datosFiltrados = datosFiltrados.filter(item => item.carrera === carrera);
+            if (estado) datosFiltrados = datosFiltrados.filter(item => item.estado === estado);
+            if (nombre) datosFiltrados = datosFiltrados.filter(item => 
+                item.nombre.toLowerCase().includes(nombre) || 
+                item.apellido.toLowerCase().includes(nombre) ||
+                item.nombreCompleto.toLowerCase().includes(nombre)
+            );
+            
+            if (datosFiltrados.length === 0) {
+                showAlert('No hay datos para generar el reporte', 'warning');
+                return;
+            }
+            
+            const fechaActual = new Date().toLocaleString();
+            const usuario = getCurrentUser();
+            
+            let filtrosTexto = [];
+            if (carrera) filtrosTexto.push(`Carrera: ${carrera}`);
+            if (estado) filtrosTexto.push(`Estado: ${estado}`);
+            if (nombre) filtrosTexto.push(`Nombre: ${nombre}`);
+            const filtrosAplicados = filtrosTexto.length > 0 ? filtrosTexto.join(' | ') : 'Todos los registros';
+            
+            let tablaHTML = '<table class="pdf-table">';
+            tablaHTML += '<thead><tr>';
+            tablaHTML += '<th>ID</th><th>Nombre</th><th>Carrera</th><th>Semestre</th><th>Promedio</th><th>Oferta</th><th>Empresa</th><th>Tutor</th><th>Estado</th>';
+            tablaHTML += '</tr></thead><tbody>';
+            
+            datosFiltrados.forEach(item => {
+                tablaHTML += '<tr>';
+                tablaHTML += `<td>${item.id}</td>`;
+                tablaHTML += `<td>${item.nombre} ${item.apellido}</td>`;
+                tablaHTML += `<td>${item.carrera}</td>`;
+                tablaHTML += `<td>${item.semester}</td>`;
+                tablaHTML += `<td>${item.promedio}</td>`;
+                tablaHTML += `<td>${item.oferta}</td>`;
+                tablaHTML += `<td>${item.empresa}</td>`;
+                tablaHTML += `<td>${item.tutor}</td>`;
+                tablaHTML += `<td>${item.estado}</td>`;
+                tablaHTML += '</tr>';
+            });
+            
+            tablaHTML += '</tbody></table>';
+            
+            const pdfHTML = `
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 20px;">
+                    <div class="pdf-header">
+                        <h1>InternSys - Sistema de Gestión de Pasantías</h1>
+                        <p>Reporte de Estudiantes</p>
+                        <p><strong>Generado:</strong> ${fechaActual}</p>
+                        <p><strong>Generado por:</strong> ${usuario?.nombre || 'Administrador'} ${usuario?.apellido || ''}</p>
+                        <p><strong>Filtros aplicados:</strong> ${filtrosAplicados}</p>
+                        <p><strong>Total de registros:</strong> ${datosFiltrados.length}</p>
+                    </div>
+                    ${tablaHTML}
+                    <div class="pdf-footer">
+                        <p>InternSys - Todos los derechos reservados</p>
+                        <p>Este reporte es confidencial y solo para uso administrativo</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('pdfHTML').innerHTML = pdfHTML;
+            
+            const element = document.getElementById('pdfContent');
+            element.style.display = 'block';
+            
+            const opt = {
+                margin: [0.5, 0.5, 0.5, 0.5],
+                filename: `reporte_estudiantes_${Date.now()}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, letterRendering: true },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+            };
+            
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.style.display = 'none';
+                showAlert('Reporte generado exitosamente', 'success');
+            }).catch(err => {
+                console.error('Error generando PDF:', err);
+                showAlert('Error al generar el PDF', 'error');
+                element.style.display = 'none';
+            });
+        }
+        
+        document.getElementById('toggleSidebar').addEventListener('click', () => { 
+            document.getElementById('sidebar').classList.toggle('closed'); 
+            document.getElementById('mainContent').classList.toggle('expanded'); 
+        });
+        
+        document.getElementById('filterCarrera').addEventListener('change', aplicarFiltros);
+        document.getElementById('filterEstado').addEventListener('change', aplicarFiltros);
+        document.getElementById('filterNombre').addEventListener('input', aplicarFiltros);
+        
+        function loadUserInfo() { 
+            const user = getCurrentUser(); 
+            if(user && user.rol === 'admin') {
+                document.getElementById('userName').innerText = user.nombre; 
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => { 
+            if (verificarAcceso()) {
+                loadUserInfo(); 
+                cargarDatos();
+            }
+        });
+    </script>
+</body>
+</html>
