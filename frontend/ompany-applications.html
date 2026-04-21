@@ -147,21 +147,13 @@
                 
                 document.getElementById('userName').innerText = user.nombre || 'Empresa';
                 
-                if (!user.empresa_id) {
-                    console.error('Usuario empresa sin empresa_id:', user);
-                    $('#applicationsTable tbody').html('<tr><td colspan="7" class="text-center text-danger">No se encontró la empresa asociada a tu cuenta. Contacta al administrador.</td></table>');
-                    return;
-                }
-                
-                console.log('Cargando postulaciones para empresa ID:', user.empresa_id);
-                
                 const response = await ApplicationService.getByCompany(user.empresa_id);
                 const applications = response.result || [];
                 
-                console.log('Postulaciones recibidas:', applications);
+                console.log('Postulaciones:', applications);
                 
                 if (applications.length === 0) {
-                    $('#applicationsTable tbody').html('<tr><td colspan="7" class="text-center">No hay postulaciones recibidas aún</td></tr>');
+                    $('#applicationsTable tbody').html('<tr><td colspan="7" class="text-center">No hay postulaciones recibidas</td></tr>');
                     if (applicationsTable) applicationsTable.destroy();
                     return;
                 }
@@ -179,7 +171,7 @@
                         a.offer_title || '-',
                         a.application_date,
                         estadoBadge,
-                        `<button class="btn btn-sm btn-info" onclick="viewApplication(${a.id})"><i class="fas fa-eye"></i> Ver Detalles</button>`
+                        `<button class="btn btn-sm btn-info" onclick="viewApplication(${a.id})">Ver Detalles</button>`
                     ];
                 });
                 
@@ -202,8 +194,7 @@
                 });
                 
             } catch (error) {
-                console.error('Error en initDataTable:', error);
-                $('#applicationsTable tbody').html(`<td><td colspan="7" class="text-center text-danger">Error al cargar: ${error.message}</td></tr>`);
+                console.error('Error:', error);
                 showAlert('Error al cargar postulaciones', 'error');
             }
         }
@@ -224,8 +215,7 @@
                 
                 const html = `
                     <table class="table table-bordered">
-                        <tr><th width="35%">ID Postulación</th><td>${app.id}</td></tr>
-                        <tr><th>Estudiante</th><td>${app.student_nombre || 'N/A'}</td></tr>
+                        <tr><th width="35%">Estudiante</th><td>${app.student_nombre || 'N/A'}</td></tr>
                         <tr><th>Carrera</th><td>${app.student_carrera || 'N/A'}</td></tr>
                         <tr><th>Oferta</th><td>${app.offer_title || 'N/A'}</td></tr>
                         <tr><th>Fecha Postulación</th><td>${app.application_date}</td></tr>
@@ -250,7 +240,6 @@
                 
                 new bootstrap.Modal(document.getElementById('applicationModal')).show();
             } catch (error) {
-                console.error('Error:', error);
                 showAlert('Error al cargar detalles', 'error');
             }
         }
@@ -262,7 +251,6 @@
                 bootstrap.Modal.getInstance(document.getElementById('applicationModal')).hide();
                 refreshData();
             } catch (error) {
-                console.error('Error:', error);
                 showAlert('Error al actualizar estado', 'error');
             }
         }

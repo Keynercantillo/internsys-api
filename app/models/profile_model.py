@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
-from datetime import date
+from datetime import date, datetime
 
 class Profile(BaseModel):
     id: Optional[int] = None
@@ -11,3 +11,6 @@ class Profile(BaseModel):
     birth_date: Optional[date] = None
     profile_picture_url: Optional[str] = None
     social_links: Optional[str] = None
+    # Campos de auditoría
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None

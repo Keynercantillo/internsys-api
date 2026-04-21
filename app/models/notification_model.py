@@ -11,3 +11,5 @@ class Notification(BaseModel):
     read: bool = False
     created_at: Optional[datetime] = None
     link_url: Optional[str] = None
+    # Campos de auditoría (updated_at no aplica para notificaciones)
+    updated_at: Optional[datetime] = None

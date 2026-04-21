@@ -19,3 +19,6 @@ class User(BaseModel):
     telefono: Optional[str] = None
     tipo: Optional[str] = None
     especialidad: Optional[str] = None
+    # Campos de auditoría
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None

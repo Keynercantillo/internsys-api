@@ -8,37 +8,52 @@
     <link href="css/styles.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    
     <script src="components/main-components.js" type="module"></script>
+    
     <style>
-        .sidebar { position: fixed; top: 0; left: 0; width: 260px; height: 100%; background: #1e2a3a; color: white; transition: 0.3s; z-index: 1000; }
+        .sidebar { position: fixed; top: 0; left: 0; width: 260px; height: 100%; background: linear-gradient(180deg, #ff7e5e, #ffd166); color: white; transition: 0.3s; z-index: 1000; }
         .sidebar.closed { margin-left: -260px; }
-        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #2c3e50; }
-        .sidebar-header h4 i { margin-right: 10px; color: #3498db; }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.2); }
+        .sidebar-header h4 i { margin-right: 10px; }
         .sidebar-menu { list-style: none; padding: 0; margin-top: 20px; }
-        .sidebar-menu .menu-item { display: block; padding: 12px 20px; color: #ecf0f1; text-decoration: none; transition: 0.3s; }
-        .sidebar-menu .menu-item:hover, .sidebar-menu .menu-item.active { background: #3498db; color: white; }
+        .sidebar-menu .menu-item { display: block; padding: 12px 20px; color: white; text-decoration: none; transition: 0.3s; border-radius: 0 25px 25px 0; margin-right: 10px; }
+        .sidebar-menu .menu-item:hover, .sidebar-menu .menu-item.active { background: rgba(255,255,255,0.2); }
         .sidebar-menu .menu-item i { width: 25px; margin-right: 10px; }
         .main-content { margin-left: 260px; transition: 0.3s; min-height: 100vh; }
         .main-content.expanded { margin-left: 0; }
-        .navbar { padding: 0.75rem 1.5rem; background: #3498db; color: white; }
-        .table-container { background: white; border-radius: 10px; padding: 20px; margin-top: 20px; }
-        .btn-add { background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 5px; margin-bottom: 20px; cursor: pointer; }
+        .navbar { padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #ff7e5e, #ffd166); color: white; }
+        .table-container { background: white; border-radius: 20px; padding: 20px; margin-top: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .btn-add { background: linear-gradient(135deg, #06d6a0, #05bd8f); color: white; border: none; padding: 10px 20px; border-radius: 30px; margin-bottom: 20px; cursor: pointer; }
+        .btn-refresh { background: linear-gradient(135deg, #48cae4, #118ab2); color: white; border: none; padding: 10px 20px; border-radius: 30px; cursor: pointer; }
+        .btn-edit-table { background: linear-gradient(135deg, #ffb347, #ff8c00); color: white; border: none; padding: 5px 12px; border-radius: 20px; font-size: 12px; margin-right: 5px; cursor: pointer; }
+        .btn-delete-table { background: linear-gradient(135deg, #ef476f, #e6395e); color: white; border: none; padding: 5px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; }
         @media (max-width: 768px) { .sidebar { margin-left: -260px; } .main-content { margin-left: 0; } }
     </style>
 </head>
 <body>
     <div class="sidebar" id="sidebar">
-        <div class="sidebar-header"><h4><i class="fas fa-graduation-cap"></i> InternSys</h4><small id="roleLabel"></small></div>
-        <ul class="sidebar-menu" id="sidebarMenu"></ul>
+        <div class="sidebar-header"><h4><i class="fas fa-graduation-cap"></i> InternSys</h4><small>Administrador</small></div>
+        <ul class="sidebar-menu">
+            <li><a href="dashboard-admin.html" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="students.html" class="menu-item"><i class="fas fa-user-graduate"></i> Estudiantes</a></li>
+            <li><a href="companies.html" class="menu-item"><i class="fas fa-building"></i> Empresas</a></li>
+            <li><a href="tutors.html" class="menu-item"><i class="fas fa-chalkboard-user"></i> Tutores</a></li>
+            <li><a href="offers.html" class="menu-item"><i class="fas fa-briefcase"></i> Ofertas</a></li>
+            <li><a href="assignments.html" class="menu-item active"><i class="fas fa-handshake"></i> Asignaciones</a></li>
+            <li><a href="users.html" class="menu-item"><i class="fas fa-users"></i> Usuarios</a></li>
+            <li><a href="reports.html" class="menu-item"><i class="fas fa-chart-line"></i> Reportes</a></li>
+            <li><a href="my-profile.html" class="menu-item"><i class="fas fa-user"></i> Mi Perfil</a></li>
+        </ul>
     </div>
 
     <div class="main-content" id="mainContent">
         <nav class="navbar">
             <div class="container-fluid">
                 <button class="btn btn-light" id="toggleSidebar"><i class="fas fa-bars"></i></button>
-                <span class="navbar-brand mb-0 h4">Asignaciones</span>
+                <span class="navbar-brand mb-0 h4">Gestión de Asignaciones</span>
                 <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-user"></i> <span id="userName"></span></button>
+                    <button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-user"></i> <span id="userName">Admin</span></button>
                     <ul class="dropdown-menu"><li><a class="dropdown-item" href="my-profile.html">Mi Perfil</a></li><li><hr class="dropdown-divider"></li><li><a class="dropdown-item text-danger" href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li></ul>
                 </div>
             </div>
@@ -46,105 +61,235 @@
 
         <div class="container-fluid mt-4">
             <div class="d-flex justify-content-between mb-3">
-                <div id="btnAddContainer" style="display:none;"><custom-button variant="success" onclick="showCreateModal()">+ Nueva Asignación</custom-button></div>
-                <custom-button variant="primary" onclick="refreshData()"><i class="fas fa-sync-alt"></i> Refrescar</custom-button>
+                <button class="btn-add" onclick="showCreateModal()"><i class="fas fa-plus"></i> Nueva Asignación</button>
+                <button class="btn-refresh" onclick="refreshData()"><i class="fas fa-sync-alt"></i> Refrescar</button>
             </div>
+
             <div class="table-container">
+                <h4>Lista de Asignaciones</h4>
                 <table id="assignmentsTable" class="table table-striped table-bordered" style="width:100%">
-                    <thead><tr><th>ID</th><th>Estudiante</th><th>Oferta</th><th>Tutor</th><th>Fecha Inicio</th><th>Fecha Fin</th><th>Estado</th><th>Horas</th><th>Acciones</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Estudiante</th>
+                            <th>Oferta</th>
+                            <th>Tutor</th>
+                            <th>Fecha Inicio</th>
+                            <th>Fecha Fin</th>
+                            <th>Estado</th>
+                            <th>Horas</th>
+                            <th>Acciones</th>
+                        </thead>
                     <tbody></tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="assignmentModal" tabindex="-1">
-        <div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title" id="modalTitle">Nueva Asignación</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-        <div class="modal-body"><form id="assignmentForm"><input type="hidden" id="assignmentId"><div class="mb-3"><label>Estudiante *</label><select class="form-control" id="student_id" required></select></div><div class="mb-3"><label>Oferta *</label><select class="form-control" id="offer_id" required></select></div><div class="mb-3"><label>Tutor *</label><select class="form-control" id="tutor_id" required></select></div><div class="row"><div class="col-md-6"><div class="mb-3"><label>Fecha Inicio *</label><input type="date" class="form-control" id="start_date" required></div></div><div class="col-md-6"><div class="mb-3"><label>Fecha Fin *</label><input type="date" class="form-control" id="end_date" required></div></div></div><div class="row"><div class="col-md-6"><div class="mb-3"><label>Horas Totales *</label><input type="number" class="form-control" id="total_hours" required></div></div><div class="col-md-6"><div class="mb-3"><label>Estado</label><select class="form-control" id="status"><option value="activo">Activo</option><option value="finalizado">Finalizado</option><option value="cancelado">Cancelado</option></select></div></div></div></form></div>
-        <div class="modal-footer"><custom-button variant="secondary" onclick="closeModal()">Cancelar</custom-button><custom-button variant="primary" onclick="saveAssignment()">Guardar</custom-button></div></div></div>
+    <div class="modal fade" id="assignmentModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white"><h5 class="modal-title" id="modalTitle">Nueva Asignación</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <form id="assignmentForm">
+                        <input type="hidden" id="assignmentId">
+                        <div class="mb-3">
+                            <label>Estudiante *</label>
+                            <select class="form-control" id="student_id" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label>Oferta *</label>
+                            <select class="form-control" id="offer_id" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label>Tutor *</label>
+                            <select class="form-control" id="tutor_id" required></select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6"><div class="mb-3"><label>Fecha Inicio *</label><input type="date" class="form-control" id="start_date" required></div></div>
+                            <div class="col-md-6"><div class="mb-3"><label>Fecha Fin *</label><input type="date" class="form-control" id="end_date" required></div></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6"><div class="mb-3"><label>Horas Totales *</label><input type="number" class="form-control" id="total_hours" required></div></div>
+                            <div class="col-md-6"><div class="mb-3"><label>Estado</label><select class="form-control" id="status"><option value="activo">Activo</option><option value="finalizado">Finalizado</option><option value="cancelado">Cancelado</option></select></div></div>
+                        </div>
+                        <div class="mb-3"><label>Horario</label><input type="text" class="form-control" id="schedule" placeholder="Ej: Lunes a Viernes 8:00 - 12:00"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveAssignment()">Guardar</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="js/services/api.js"></script>
+    <script src="js/auth.js"></script>
     
     <script>
         let assignmentsTable, currentEditId = null;
-        function getCurrentUser() { const user = localStorage.getItem('internsys_user'); return user ? JSON.parse(user) : null; }
-        function getRole() { const u = getCurrentUser(); return u ? u.rol : null; }
-        function isAdmin() { return getRole() === 'admin'; }
-        function isTutor() { return getRole() === 'tutor' || getRole() === 'docente'; }
-        function isStudent() { return getRole() === 'estudiante'; }
-        function isEmpresa() { return getRole() === 'empresa'; }
-        function cerrarSesion() { localStorage.removeItem('internsys_user'); window.location.href = 'index.html'; }
-        function closeModal() { bootstrap.Modal.getInstance(document.getElementById('assignmentModal')).hide(); }
-        function showAlert(msg, type) { if(window.showAlert) window.showAlert(msg, type); else alert(msg); }
         
-        function loadSidebarMenu() {
-            const user = getCurrentUser(); const menu = document.getElementById('sidebarMenu'); const roleLabel = document.getElementById('roleLabel');
-            if(!user) return;
-            roleLabel.innerText = user.rol === 'admin' ? 'Administrador' : (user.rol === 'estudiante' ? 'Estudiante' : (user.rol === 'empresa' ? 'Empresa' : 'Tutor'));
-            document.getElementById('userName').innerText = user.nombre;
-            if(user.rol === 'admin') {
-                document.getElementById('btnAddContainer').style.display = 'block';
-                menu.innerHTML = `<li><a href="dashboard-admin.html" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li><li><a href="students.html" class="menu-item"><i class="fas fa-user-graduate"></i> Estudiantes</a></li><li><a href="companies.html" class="menu-item"><i class="fas fa-building"></i> Empresas</a></li><li><a href="tutors.html" class="menu-item"><i class="fas fa-chalkboard-user"></i> Tutores</a></li><li><a href="offers.html" class="menu-item"><i class="fas fa-briefcase"></i> Ofertas</a></li><li><a href="assignments.html" class="menu-item active"><i class="fas fa-handshake"></i> Asignaciones</a></li><li><a href="users.html" class="menu-item"><i class="fas fa-users"></i> Usuarios</a></li>`;
-            } else if(user.rol === 'estudiante') {
-                document.getElementById('btnAddContainer').style.display = 'none';
-                menu.innerHTML = `<li><a href="dashboard-student.html" class="menu-item"><i class="fas fa-tachometer-alt"></i> Mi Dashboard</a></li><li><a href="my-profile.html" class="menu-item"><i class="fas fa-user"></i> Mi Perfil</a></li><li><a href="my-assignments.html" class="menu-item"><i class="fas fa-tasks"></i> Mis Asignaciones</a></li><li><a href="my-evaluations.html" class="menu-item"><i class="fas fa-star"></i> Mis Evaluaciones</a></li><li><a href="offers.html" class="menu-item"><i class="fas fa-briefcase"></i> Ofertas</a></li>`;
-            } else if(user.rol === 'empresa') {
-                document.getElementById('btnAddContainer').style.display = 'none';
-                menu.innerHTML = `<li><a href="dashboard-company.html" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li><li><a href="company-offers.html" class="menu-item"><i class="fas fa-briefcase"></i> Mis Ofertas</a></li><li><a href="company-assignments.html" class="menu-item"><i class="fas fa-handshake"></i> Mis Asignaciones</a></li><li><a href="company-applications.html" class="menu-item"><i class="fas fa-file-alt"></i> Postulaciones</a></li><li><a href="company-profile.html" class="menu-item"><i class="fas fa-building"></i> Mi Empresa</a></li><li><a href="my-profile.html" class="menu-item"><i class="fas fa-user"></i> Mi Perfil</a></li>`;
-            } else {
-                document.getElementById('btnAddContainer').style.display = 'none';
-                menu.innerHTML = `<li><a href="dashboard-tutor.html" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li><li><a href="my-students.html" class="menu-item"><i class="fas fa-users"></i> Mis Estudiantes</a></li><li><a href="evaluations.html" class="menu-item"><i class="fas fa-star"></i> Evaluaciones</a></li><li><a href="followup.html" class="menu-item"><i class="fas fa-calendar-check"></i> Visitas</a></li><li><a href="my-profile.html" class="menu-item"><i class="fas fa-user"></i> Mi Perfil</a></li>`;
-            }
+        function getCurrentUser() { const user = localStorage.getItem('internsys_user'); return user ? JSON.parse(user) : null; }
+        function cerrarSesion() { localStorage.removeItem('internsys_user'); window.location.href = 'index.html'; }
+        function closeModal() { 
+            const modal = bootstrap.Modal.getInstance(document.getElementById('assignmentModal'));
+            if (modal) modal.hide();
+            // Limpiar backdrop
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
         }
+        function showAlert(msg, type) { Swal.fire({ title: type === 'success' ? 'Éxito' : 'Error', text: msg, icon: type, confirmButtonColor: '#ff7e5e', timer: 2000 }); }
         
         async function loadSelects() {
-            const students = (await StudentService.getAll()).result || [];
-            const offers = (await OfferService.getAll()).result || [];
-            const tutors = (await TutorService.getAll()).result || [];
-            document.getElementById('student_id').innerHTML = '<option value="">Seleccione...</option>' + students.map(s => `<option value="${s.id}">${s.nombre} ${s.apellido}</option>`).join('');
-            document.getElementById('offer_id').innerHTML = '<option value="">Seleccione...</option>' + offers.map(o => `<option value="${o.id}">${o.title}</option>`).join('');
-            document.getElementById('tutor_id').innerHTML = '<option value="">Seleccione...</option>' + tutors.map(t => `<option value="${t.id}">${t.nombre} ${t.apellido}</option>`).join('');
+            try {
+                const students = (await StudentService.getAll()).result || [];
+                const offers = (await OfferService.getAll()).result || [];
+                const tutors = (await TutorService.getAll()).result || [];
+                
+                document.getElementById('student_id').innerHTML = '<option value="">Seleccione...</option>' + students.map(s => `<option value="${s.id}">${s.nombre} ${s.apellido}</option>`).join('');
+                document.getElementById('offer_id').innerHTML = '<option value="">Seleccione...</option>' + offers.map(o => `<option value="${o.id}">${o.title}</option>`).join('');
+                document.getElementById('tutor_id').innerHTML = '<option value="">Seleccione...</option>' + tutors.map(t => `<option value="${t.id}">${t.nombre} ${t.apellido}</option>`).join('');
+            } catch(e) { console.error(e); showAlert('Error al cargar datos', 'error'); }
         }
         
         async function initDataTable() {
-            const user = getCurrentUser();
-            let assignments = (await AssignmentService.getAll()).result || [];
-            const students = (await StudentService.getAll()).result || [];
-            const offers = (await OfferService.getAll()).result || [];
-            const tutors = (await TutorService.getAll()).result || [];
-            const companies = (await CompanyService.getAll()).result || [];
-            const companyMap = {}; companies.forEach(c => companyMap[c.id] = c.name);
-            const studentMap = {}; students.forEach(s => studentMap[s.id] = `${s.nombre} ${s.apellido}`);
-            const offerMap = {}; offers.forEach(o => offerMap[o.id] = o.title);
-            const tutorMap = {}; tutors.forEach(t => tutorMap[t.id] = `${t.nombre} ${t.apellido}`);
-            
-            if(isStudent()) assignments = assignments.filter(a => a.student_id === user.id);
-            if(isTutor()) assignments = assignments.filter(a => a.tutor_id === user.id);
-            if(isEmpresa()) { const myOffers = offers.filter(o => o.company_id === user.empresa_id).map(o => o.id); assignments = assignments.filter(a => myOffers.includes(a.internship_offer_id)); }
-            
-            const data = assignments.map(a => [
-                a.id, studentMap[a.student_id] || '-', offerMap[a.internship_offer_id] || '-', tutorMap[a.tutor_id] || '-',
-                a.start_date || '-', a.end_date || '-', a.status === 'activo' ? '<span class="badge bg-success">Activo</span>' : '<span class="badge bg-secondary">Finalizado</span>',
-                `${a.completed_hours || 0}/${a.total_hours || 0}`,
-                isAdmin() ? `<custom-button variant="warning" size="sm" onclick="editAssignment(${a.id})">Editar</custom-button> <custom-button variant="danger" size="sm" onclick="deleteAssignment(${a.id})">Eliminar</custom-button>` : ''
-            ]);
-            if(assignmentsTable) assignmentsTable.destroy();
-            assignmentsTable = $('#assignmentsTable').DataTable({ data, columns: [{ title: "ID" }, { title: "Estudiante" }, { title: "Oferta" }, { title: "Tutor" }, { title: "Fecha Inicio" }, { title: "Fecha Fin" }, { title: "Estado" }, { title: "Horas" }, { title: "Acciones", orderable: false }], language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' }, pageLength: 10 });
+            try {
+                const [assignments, students, offers, tutors] = await Promise.all([
+                    AssignmentService.getAll(),
+                    StudentService.getAll(),
+                    OfferService.getAll(),
+                    TutorService.getAll()
+                ]);
+                
+                const studentMap = {}; (students.result || []).forEach(s => studentMap[s.id] = `${s.nombre} ${s.apellido}`);
+                const offerMap = {}; (offers.result || []).forEach(o => offerMap[o.id] = o.title);
+                const tutorMap = {}; (tutors.result || []).forEach(t => tutorMap[t.id] = `${t.nombre} ${t.apellido}`);
+                
+                const data = (assignments.result || []).map(a => [
+                    studentMap[a.student_id] || '-',
+                    offerMap[a.internship_offer_id] || '-',
+                    tutorMap[a.tutor_id] || '-',
+                    a.start_date || '-',
+                    a.end_date || '-',
+                    a.status === 'activo' ? '<span class="badge bg-success">Activo</span>' : '<span class="badge bg-secondary">Finalizado</span>',
+                    `${a.completed_hours || 0}/${a.total_hours || 0}`,
+                    `<button class="btn-edit-table" onclick="editAssignment(${a.id})"><i class="fas fa-edit"></i> Editar</button>
+                     <button class="btn-delete-table" onclick="deleteAssignment(${a.id})"><i class="fas fa-trash"></i> Eliminar</button>`
+                ]);
+                
+                if(assignmentsTable) assignmentsTable.destroy();
+                assignmentsTable = $('#assignmentsTable').DataTable({ 
+                    data: data, 
+                    columns: [
+                        { title: "Estudiante" }, { title: "Oferta" }, { title: "Tutor" },
+                        { title: "Fecha Inicio" }, { title: "Fecha Fin" }, { title: "Estado" },
+                        { title: "Horas" }, { title: "Acciones", orderable: false }
+                    ], 
+                    language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' }, 
+                    pageLength: 10
+                });
+            } catch(e) { showAlert('Error al cargar asignaciones', 'error'); }
         }
         
         async function refreshData() { await initDataTable(); showAlert('Datos actualizados', 'success'); }
-        function showCreateModal() { if(!isAdmin()) return; currentEditId = null; document.getElementById('assignmentForm').reset(); loadSelects(); new bootstrap.Modal(document.getElementById('assignmentModal')).show(); }
-        async function editAssignment(id) { if(!isAdmin()) return; const a = await AssignmentService.getById(id); currentEditId = id; await loadSelects(); document.getElementById('student_id').value = a.student_id; document.getElementById('offer_id').value = a.internship_offer_id; document.getElementById('tutor_id').value = a.tutor_id; document.getElementById('start_date').value = a.start_date; document.getElementById('end_date').value = a.end_date; document.getElementById('total_hours').value = a.total_hours; document.getElementById('status').value = a.status; new bootstrap.Modal(document.getElementById('assignmentModal')).show(); }
-        async function saveAssignment() { if(!isAdmin()) return; const data = { student_id: parseInt(document.getElementById('student_id').value), internship_offer_id: parseInt(document.getElementById('offer_id').value), tutor_id: parseInt(document.getElementById('tutor_id').value), start_date: document.getElementById('start_date').value, end_date: document.getElementById('end_date').value, total_hours: parseInt(document.getElementById('total_hours').value), status: document.getElementById('status').value, assignment_date: new Date().toISOString().split('T')[0], completed_hours: 0 }; try { if(currentEditId) await AssignmentService.update(currentEditId, data); else await AssignmentService.create(data); showAlert('Asignación guardada', 'success'); closeModal(); refreshData(); } catch(e) { showAlert('Error: ' + e.message, 'error'); } }
-        async function deleteAssignment(id) { if(!isAdmin() || !confirm('¿Eliminar?')) return; await AssignmentService.delete(id); showAlert('Eliminada', 'success'); refreshData(); }
         
-        document.getElementById('toggleSidebar').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('closed'); document.getElementById('mainContent').classList.toggle('expanded'); });
-        document.addEventListener('DOMContentLoaded', () => { loadSidebarMenu(); refreshData(); });
+        function showCreateModal() { currentEditId = null; document.getElementById('assignmentForm').reset(); document.getElementById('modalTitle').innerText = 'Nueva Asignación'; loadSelects(); new bootstrap.Modal(document.getElementById('assignmentModal')).show(); }
+        
+        async function editAssignment(id) {
+            try {
+                const a = await AssignmentService.getById(id);
+                if (!a) { showAlert('Error al cargar la asignación', 'error'); return; }
+                currentEditId = id;
+                await loadSelects();
+                document.getElementById('student_id').value = a.student_id;
+                document.getElementById('offer_id').value = a.internship_offer_id;
+                document.getElementById('tutor_id').value = a.tutor_id;
+                document.getElementById('start_date').value = a.start_date;
+                document.getElementById('end_date').value = a.end_date;
+                document.getElementById('total_hours').value = a.total_hours;
+                document.getElementById('status').value = a.status;
+                document.getElementById('schedule').value = a.schedule || '';
+                document.getElementById('modalTitle').innerText = 'Editar Asignación';
+                new bootstrap.Modal(document.getElementById('assignmentModal')).show();
+            } catch(e) { showAlert('Error al cargar la asignación: ' + e.message, 'error'); }
+        }
+        
+        async function saveAssignment() {
+            const studentId = document.getElementById('student_id').value;
+            const offerId = document.getElementById('offer_id').value;
+            const tutorId = document.getElementById('tutor_id').value;
+            const startDate = document.getElementById('start_date').value;
+            const endDate = document.getElementById('end_date').value;
+            const totalHours = document.getElementById('total_hours').value;
+            
+            if (!studentId || !offerId || !tutorId) {
+                showAlert('Debe seleccionar estudiante, oferta y tutor', 'error');
+                return;
+            }
+            
+            if (!startDate || !endDate) {
+                showAlert('Debe ingresar fechas de inicio y fin', 'error');
+                return;
+            }
+            
+            if (!totalHours || totalHours <= 0) {
+                showAlert('Las horas totales deben ser mayor a 0', 'error');
+                return;
+            }
+            
+            const data = {
+                student_id: parseInt(studentId),
+                internship_offer_id: parseInt(offerId),
+                tutor_id: parseInt(tutorId),
+                start_date: startDate,
+                end_date: endDate,
+                total_hours: parseInt(totalHours),
+                status: document.getElementById('status').value,
+                schedule: document.getElementById('schedule').value || null,
+                assignment_date: new Date().toISOString().split('T')[0],
+                completed_hours: 0
+            };
+            
+            Swal.fire({ title: 'Guardando...', text: 'Por favor espere', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+            
+            try {
+                if (currentEditId) {
+                    await AssignmentService.update(currentEditId, data);
+                    Swal.fire('Actualizado', 'Asignación actualizada correctamente', 'success');
+                } else {
+                    await AssignmentService.create(data);
+                    Swal.fire('Creada', 'Asignación creada correctamente', 'success');
+                }
+                closeModal();
+                await initDataTable();
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire('Error', 'Error al guardar: ' + error.message, 'error');
+            }
+        }
+        
+        async function deleteAssignment(id) {
+            if(confirm('¿Eliminar esta asignación?')) {
+                try {
+                    await AssignmentService.delete(id);
+                    showAlert('Asignación eliminada', 'success');
+                    refreshData();
+                } catch(e) { showAlert('Error al eliminar', 'error'); }
+            }
+        }
+        
+        document.getElementById('toggleSidebar').addEventListener('click', () => { 
+            document.getElementById('sidebar').classList.toggle('closed'); 
+            document.getElementById('mainContent').classList.toggle('expanded'); 
+        });
+        
+        document.addEventListener('DOMContentLoaded', () => { initDataTable(); });
     </script>
 </body>
 </html>

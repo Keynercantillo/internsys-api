@@ -24,6 +24,7 @@ from routes.notifications_routes import router as notifications_router
 from routes.profiles_routes import router as profiles_router
 from routes.reports_routes import router as reports_router
 from routes.auth_routes import router as auth_router
+from routes.applications_routes import router as applications_router  # ✅ NUEVO
 
 # ============================================
 # CREAR APLICACIÓN FASTAPI
@@ -139,6 +140,7 @@ app.include_router(followup_visits_router, prefix="/api", tags=["Follow-up Visit
 app.include_router(notifications_router, prefix="/api", tags=["Notifications"])
 app.include_router(profiles_router, prefix="/api", tags=["Profiles"])
 app.include_router(reports_router, prefix="/api", tags=["Reports"])
+app.include_router(applications_router, prefix="/api", tags=["Applications"])  # ✅ NUEVO
 
 # ============================================
 # RUTAS ADICIONALES DE LA API

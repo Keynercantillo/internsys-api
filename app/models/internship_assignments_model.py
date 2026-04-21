@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
-from datetime import date
+from datetime import date, datetime
 
 class InternshipAssignment(BaseModel):
     id: Optional[int] = None
@@ -14,7 +14,6 @@ class InternshipAssignment(BaseModel):
     schedule: Optional[str] = None
     total_hours: int
     completed_hours: int = 0
-    # Campos adicionales para mostrar (no se guardan)
-    student_nombre: Optional[str] = None
-    offer_title: Optional[str] = None
-    tutor_nombre: Optional[str] = None
+    # Campos de auditoría
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None

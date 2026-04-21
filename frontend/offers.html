@@ -8,21 +8,27 @@
     <link href="css/styles.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    
     <script src="components/main-components.js" type="module"></script>
+    
     <style>
-        .sidebar { position: fixed; top: 0; left: 0; width: 260px; height: 100%; background: #1e2a3a; color: white; transition: 0.3s; z-index: 1000; overflow-y: auto; }
+        .sidebar { position: fixed; top: 0; left: 0; width: 260px; height: 100%; background: linear-gradient(180deg, #ff7e5e, #ffd166); color: white; transition: 0.3s; z-index: 1000; overflow-y: auto; }
         .sidebar.closed { margin-left: -260px; }
-        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #2c3e50; }
-        .sidebar-header h4 i { margin-right: 10px; color: #f39c12; }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.2); }
+        .sidebar-header h4 i { margin-right: 10px; }
         .sidebar-menu { list-style: none; padding: 0; margin-top: 20px; }
-        .sidebar-menu .menu-item { display: block; padding: 12px 20px; color: #ecf0f1; text-decoration: none; transition: 0.3s; }
-        .sidebar-menu .menu-item:hover, .sidebar-menu .menu-item.active { background: #f39c12; color: white; }
+        .sidebar-menu .menu-item { display: block; padding: 12px 20px; color: white; text-decoration: none; transition: 0.3s; border-radius: 0 25px 25px 0; margin-right: 10px; }
+        .sidebar-menu .menu-item:hover, .sidebar-menu .menu-item.active { background: rgba(255,255,255,0.2); }
         .sidebar-menu .menu-item i { width: 25px; margin-right: 10px; }
         .main-content { margin-left: 260px; transition: 0.3s; min-height: 100vh; }
         .main-content.expanded { margin-left: 0; }
-        .navbar { padding: 0.75rem 1.5rem; background: #f39c12; color: white; }
-        .table-container { background: white; border-radius: 10px; padding: 20px; margin-top: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
-        .btn-add { background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 5px; margin-bottom: 20px; cursor: pointer; }
+        .navbar { padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #ff7e5e, #ffd166); color: white; }
+        .table-container { background: white; border-radius: 20px; padding: 20px; margin-top: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .btn-add { background: linear-gradient(135deg, #06d6a0, #05bd8f); color: white; border: none; padding: 10px 20px; border-radius: 30px; margin-bottom: 20px; cursor: pointer; }
+        .btn-refresh { background: linear-gradient(135deg, #48cae4, #118ab2); color: white; border: none; padding: 10px 20px; border-radius: 30px; cursor: pointer; }
+        .btn-edit-table { background: linear-gradient(135deg, #ffb347, #ff8c00); color: white; border: none; padding: 5px 12px; border-radius: 20px; font-size: 12px; margin-right: 5px; cursor: pointer; }
+        .btn-delete-table { background: linear-gradient(135deg, #ef476f, #e6395e); color: white; border: none; padding: 5px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; }
+        .btn-apply { background: linear-gradient(135deg, #06d6a0, #05bd8f); color: white; border: none; padding: 5px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; }
         @media (max-width: 768px) { .sidebar { margin-left: -260px; } .main-content { margin-left: 0; } }
     </style>
 </head>
@@ -46,41 +52,73 @@
 
         <div class="container-fluid mt-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <div id="btnAddContainer" style="display:none;"><custom-button variant="success" onclick="showCreateModal()"><i class="fas fa-plus"></i> Nueva Oferta</custom-button></div>
-                <custom-button variant="primary" onclick="refreshData()"><i class="fas fa-sync-alt"></i> Refrescar</custom-button>
+                <div id="btnAddContainer" style="display:none;">
+                    <button class="btn-add" onclick="showCreateModal()"><i class="fas fa-plus"></i> Nueva Oferta</button>
+                </div>
+                <button class="btn-refresh" onclick="refreshData()"><i class="fas fa-sync-alt"></i> Refrescar</button>
             </div>
+
             <div id="offersGrid" class="row"></div>
+
             <div class="table-container mt-4">
                 <h4>Lista de Ofertas</h4>
                 <table id="offersTable" class="table table-striped table-bordered" style="width:100%">
-                    <thead><tr><th>ID</th><th>Título</th><th>Empresa</th><th>Vacantes</th><th>Estado</th><th>Fecha Inicio</th><th>Acciones</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Título</th>
+                            <th>Empresa</th>
+                            <th>Vacantes</th>
+                            <th>Estado</th>
+                            <th>Fecha Inicio</th>
+                            <th>Acciones</th>
+                        </thead>
                     <tbody></tbody>
                 </table>
             </div>
         </div>
     </div>
 
+    <!-- Modal para Crear/Editar Oferta -->
     <div class="modal fade" id="offerModal" tabindex="-1">
-        <div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title" id="modalTitle">Nueva Oferta</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-        <div class="modal-body"><form id="offerForm"><input type="hidden" id="offerId"><div class="mb-3"><label>Título *</label><input type="text" class="form-control" id="title" required></div><div class="mb-3"><label>Descripción</label><textarea class="form-control" id="description" rows="3"></textarea></div><div class="mb-3"><label>Empresa *</label><select class="form-control" id="company_id" required></select></div><div class="mb-3"><label>Vacantes *</label><input type="number" class="form-control" id="available_positions" required></div><div class="row"><div class="col-md-6"><div class="mb-3"><label>Fecha Inicio</label><input type="date" class="form-control" id="start_date"></div></div><div class="col-md-6"><div class="mb-3"><label>Fecha Fin</label><input type="date" class="form-control" id="end_date"></div></div></div><div class="mb-3"><label>Habilidades</label><textarea class="form-control" id="required_skills" rows="2"></textarea></div><div class="mb-3"><label>Requisitos</label><textarea class="form-control" id="requirements" rows="2"></textarea></div><div class="mb-3"><label>Estado</label><select class="form-control" id="status"><option value="disponible">Disponible</option><option value="ocupado">Ocupado</option></select></div></form></div>
-        <div class="modal-footer"><custom-button variant="secondary" onclick="closeModal()">Cancelar</custom-button><custom-button variant="primary" onclick="saveOffer()">Guardar</custom-button></div></div></div>
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white"><h5 class="modal-title" id="modalTitle">Nueva Oferta</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <form id="offerForm"><input type="hidden" id="offerId">
+                        <div class="mb-3"><label>Título *</label><input type="text" class="form-control" id="title" required></div>
+                        <div class="mb-3"><label>Descripción</label><textarea class="form-control" id="description" rows="3"></textarea></div>
+                        <div class="mb-3"><label>Empresa *</label><select class="form-control" id="company_id" required></select></div>
+                        <div class="mb-3"><label>Vacantes *</label><input type="number" class="form-control" id="available_positions" required></div>
+                        <div class="row"><div class="col-md-6"><div class="mb-3"><label>Fecha Inicio</label><input type="date" class="form-control" id="start_date"></div></div>
+                        <div class="col-md-6"><div class="mb-3"><label>Fecha Fin</label><input type="date" class="form-control" id="end_date"></div></div></div>
+                        <div class="mb-3"><label>Habilidades</label><textarea class="form-control" id="required_skills" rows="2"></textarea></div>
+                        <div class="mb-3"><label>Requisitos</label><textarea class="form-control" id="requirements" rows="2"></textarea></div>
+                        <div class="mb-3"><label>Estado</label><select class="form-control" id="status"><option value="disponible">Disponible</option><option value="ocupado">Ocupado</option></select></div>
+                    </form>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" onclick="saveOffer()">Guardar</button></div>
+            </div>
+        </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="js/services/api.js"></script>
+    <script src="js/auth.js"></script>
     
     <script>
         let offersTable, currentEditId = null;
+        
         function getCurrentUser() { const user = localStorage.getItem('internsys_user'); return user ? JSON.parse(user) : null; }
         function getRole() { const u = getCurrentUser(); return u ? u.rol : null; }
         function isAdmin() { return getRole() === 'admin'; }
         function isStudent() { return getRole() === 'estudiante'; }
         function cerrarSesion() { localStorage.removeItem('internsys_user'); window.location.href = 'index.html'; }
         function closeModal() { bootstrap.Modal.getInstance(document.getElementById('offerModal')).hide(); }
-        function showAlert(msg, type) { if(window.showAlert) window.showAlert(msg, type); else alert(msg); }
+        function showAlert(msg, type) { Swal.fire({ title: type === 'success' ? 'Éxito' : 'Error', text: msg, icon: type, confirmButtonColor: '#ff7e5e', timer: 2000 }); }
         
         function loadSidebarMenu() {
             const user = getCurrentUser();
@@ -91,7 +129,7 @@
             document.getElementById('userName').innerText = user.nombre || 'Usuario';
             if(user.rol === 'admin') {
                 document.getElementById('btnAddContainer').style.display = 'block';
-                menu.innerHTML = `<li><a href="dashboard-admin.html" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li><li><a href="students.html" class="menu-item"><i class="fas fa-user-graduate"></i> Estudiantes</a></li><li><a href="companies.html" class="menu-item"><i class="fas fa-building"></i> Empresas</a></li><li><a href="tutors.html" class="menu-item"><i class="fas fa-chalkboard-user"></i> Tutores</a></li><li><a href="offers.html" class="menu-item active"><i class="fas fa-briefcase"></i> Ofertas</a></li><li><a href="assignments.html" class="menu-item"><i class="fas fa-handshake"></i> Asignaciones</a></li><li><a href="users.html" class="menu-item"><i class="fas fa-users"></i> Usuarios</a></li>`;
+                menu.innerHTML = `<li><a href="dashboard-admin.html" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li><li><a href="students.html" class="menu-item"><i class="fas fa-user-graduate"></i> Estudiantes</a></li><li><a href="companies.html" class="menu-item"><i class="fas fa-building"></i> Empresas</a></li><li><a href="tutors.html" class="menu-item"><i class="fas fa-chalkboard-user"></i> Tutores</a></li><li><a href="offers.html" class="menu-item active"><i class="fas fa-briefcase"></i> Ofertas</a></li><li><a href="assignments.html" class="menu-item"><i class="fas fa-handshake"></i> Asignaciones</a></li><li><a href="users.html" class="menu-item"><i class="fas fa-users"></i> Usuarios</a></li><li><a href="reports.html" class="menu-item"><i class="fas fa-chart-line"></i> Reportes</a></li><li><a href="my-profile.html" class="menu-item"><i class="fas fa-user"></i> Mi Perfil</a></li>`;
             } else if(user.rol === 'estudiante') {
                 document.getElementById('btnAddContainer').style.display = 'none';
                 menu.innerHTML = `<li><a href="dashboard-student.html" class="menu-item"><i class="fas fa-tachometer-alt"></i> Mi Dashboard</a></li><li><a href="my-profile.html" class="menu-item"><i class="fas fa-user"></i> Mi Perfil</a></li><li><a href="my-assignments.html" class="menu-item"><i class="fas fa-tasks"></i> Mis Asignaciones</a></li><li><a href="my-evaluations.html" class="menu-item"><i class="fas fa-star"></i> Mis Evaluaciones</a></li><li><a href="offers.html" class="menu-item active"><i class="fas fa-briefcase"></i> Ofertas</a></li>`;
@@ -111,31 +149,25 @@
             (res.result || []).forEach(c => select.innerHTML += `<option value="${c.id}">${c.name}</option>`);
         }
         
-        async function loadOfferCards() {
+        async function applyToOffer(offerId, companyId) {
             const user = getCurrentUser();
-            const offers = (await OfferService.getAll()).result || [];
-            const companies = (await CompanyService.getAll()).result || [];
-            const companyMap = {}; companies.forEach(c => companyMap[c.id] = c.name);
-            const container = document.getElementById('offersGrid');
-            container.innerHTML = offers.map(o => `
-                <div class="col-md-4 col-lg-3 mb-3">
-                    <offer-card data-id="${o.id}" data-title="${o.title}" data-company="${companyMap[o.company_id]}" data-vacancies="${o.available_positions}" data-start-date="${o.start_date}" data-status="${o.status}">
-                        ${isAdmin() ? `<custom-button variant="primary" size="sm" onclick="editOffer(${o.id})">Editar</custom-button><custom-button variant="danger" size="sm" onclick="deleteOffer(${o.id})">Eliminar</custom-button>` : ''}
-                        ${isStudent() && o.status === 'disponible' ? `<custom-button variant="success" size="sm" onclick="applyToOffer(${o.id})">Aplicar</custom-button>` : ''}
-                    </offer-card>
-                </div>
-            `).join('');
-        }
-        
-        async function applyToOffer(offerId) {
-            if(!isStudent()) { showAlert('Solo estudiantes pueden aplicar', 'error'); return; }
-            const result = await Swal.fire({ title: 'Confirmar', text: '¿Deseas aplicar a esta oferta?', icon: 'question', showCancelButton: true });
-            if(result.isConfirmed) {
+            if (!user || user.rol !== 'estudiante') {
+                showAlert('Solo los estudiantes pueden aplicar a ofertas', 'error');
+                return;
+            }
+            const result = await Swal.fire({
+                title: '¿Aplicar a esta oferta?', text: 'Se enviará tu solicitud a la empresa', icon: 'question',
+                showCancelButton: true, confirmButtonColor: '#06d6a0', confirmButtonText: 'Sí, aplicar', cancelButtonText: 'Cancelar'
+            });
+            if (result.isConfirmed) {
                 try {
-                    await ApplicationService.create({ offer_id: offerId, student_id: getCurrentUser().id, status: 'pendiente', application_date: new Date().toISOString().split('T')[0] });
+                    await ApplicationService.create({
+                        offer_id: offerId, student_id: user.id, empresa_id: companyId,
+                        status: 'pendiente', application_date: new Date().toISOString().split('T')[0], comments: ''
+                    });
                     showAlert('Solicitud enviada correctamente', 'success');
                     refreshData();
-                } catch(e) { showAlert('Error al aplicar: ' + e.message, 'error'); }
+                } catch (error) { showAlert('Error al aplicar: ' + error.message, 'error'); }
             }
         }
         
@@ -144,24 +176,30 @@
             const offers = (await OfferService.getAll()).result || [];
             const companies = (await CompanyService.getAll()).result || [];
             const companyMap = {}; companies.forEach(c => companyMap[c.id] = c.name);
+            const applications = (await ApplicationService?.getAll())?.result || [];
+            const hasApplied = (offerId) => applications.some(a => a.offer_id === offerId && a.student_id === user?.id);
+            
             const data = offers.map(o => [
-                o.id, o.title, companyMap[o.company_id] || '-', o.available_positions,
+                o.title, companyMap[o.company_id] || '-', o.available_positions || 0,
                 o.status === 'disponible' ? '<span class="badge bg-success">Disponible</span>' : '<span class="badge bg-secondary">Ocupado</span>',
                 o.start_date || '-',
-                isAdmin() ? `<custom-button variant="warning" size="sm" onclick="editOffer(${o.id})">Editar</custom-button> <custom-button variant="danger" size="sm" onclick="deleteOffer(${o.id})">Eliminar</custom-button>` : (isStudent() && o.status === 'disponible' ? `<custom-button variant="success" size="sm" onclick="applyToOffer(${o.id})">Aplicar</custom-button>` : '')
+                isAdmin() ? `<button class="btn-edit-table" onclick="editOffer(${o.id})"><i class="fas fa-edit"></i> Editar</button>
+                             <button class="btn-delete-table" onclick="deleteOffer(${o.id})"><i class="fas fa-trash"></i> Eliminar</button>` :
+                (isStudent() && o.status === 'disponible' && !hasApplied(o.id) ? `<button class="btn-apply" onclick="applyToOffer(${o.id}, ${o.company_id})"><i class="fas fa-paper-plane"></i> Aplicar</button>` :
+                (isStudent() && hasApplied(o.id) ? '<span class="badge bg-secondary">Aplicado</span>' : ''))
             ]);
             if(offersTable) offersTable.destroy();
-            offersTable = $('#offersTable').DataTable({ data, columns: [{ title: "ID" }, { title: "Título" }, { title: "Empresa" }, { title: "Vacantes" }, { title: "Estado" }, { title: "Fecha Inicio" }, { title: "Acciones", orderable: false }], language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' }, pageLength: 10 });
+            offersTable = $('#offersTable').DataTable({ data, columns: [{ title: "Título" }, { title: "Empresa" }, { title: "Vacantes" }, { title: "Estado" }, { title: "Fecha Inicio" }, { title: "Acciones", orderable: false }], language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' }, pageLength: 10 });
         }
         
-        async function refreshData() { await Promise.all([loadOfferCards(), initDataTable()]); showAlert('Datos actualizados', 'success'); }
-        function showCreateModal() { if(!isAdmin()) { showAlert('No tienes permisos', 'error'); return; } currentEditId = null; document.getElementById('offerForm').reset(); loadCompanies(); new bootstrap.Modal(document.getElementById('offerModal')).show(); }
+        async function refreshData() { await initDataTable(); showAlert('Datos actualizados', 'success'); }
+        function showCreateModal() { if(!isAdmin()) return; currentEditId = null; document.getElementById('offerForm').reset(); loadCompanies(); new bootstrap.Modal(document.getElementById('offerModal')).show(); }
         async function editOffer(id) { if(!isAdmin()) return; const o = await OfferService.getById(id); currentEditId = id; await loadCompanies(); document.getElementById('title').value = o.title; document.getElementById('description').value = o.description; document.getElementById('company_id').value = o.company_id; document.getElementById('available_positions').value = o.available_positions; document.getElementById('start_date').value = o.start_date; document.getElementById('end_date').value = o.end_date; document.getElementById('required_skills').value = o.required_skills; document.getElementById('requirements').value = o.requirements; document.getElementById('status').value = o.status; document.getElementById('modalTitle').innerText = 'Editar Oferta'; new bootstrap.Modal(document.getElementById('offerModal')).show(); }
-        async function saveOffer() { if(!isAdmin()) return; const data = { title: document.getElementById('title').value, description: document.getElementById('description').value, company_id: parseInt(document.getElementById('company_id').value), available_positions: parseInt(document.getElementById('available_positions').value), start_date: document.getElementById('start_date').value || null, end_date: document.getElementById('end_date').value || null, required_skills: document.getElementById('required_skills').value, requirements: document.getElementById('requirements').value, status: document.getElementById('status').value }; try { if(currentEditId) await OfferService.update(currentEditId, data); else await OfferService.create(data); showAlert('Oferta guardada', 'success'); closeModal(); refreshData(); } catch(e) { showAlert('Error: ' + e.message, 'error'); } }
-        async function deleteOffer(id) { if(!isAdmin() || !confirm('¿Eliminar oferta?')) return; await OfferService.delete(id); showAlert('Oferta eliminada', 'success'); refreshData(); }
+        async function saveOffer() { if(!isAdmin()) return; const data = { title: document.getElementById('title').value, description: document.getElementById('description').value, company_id: parseInt(document.getElementById('company_id').value), available_positions: parseInt(document.getElementById('available_positions').value), start_date: document.getElementById('start_date').value || null, end_date: document.getElementById('end_date').value || null, required_skills: document.getElementById('required_skills').value, requirements: document.getElementById('requirements').value, status: document.getElementById('status').value }; try { if(currentEditId) { await OfferService.update(currentEditId, data); showAlert('Oferta actualizada', 'success'); } else { await OfferService.create(data); showAlert('Oferta creada', 'success'); } closeModal(); refreshData(); } catch(e) { showAlert('Error al guardar: ' + e.message, 'error'); } }
+        async function deleteOffer(id) { if(!isAdmin() || !confirm('¿Eliminar esta oferta?')) return; try { await OfferService.delete(id); showAlert('Oferta eliminada', 'success'); refreshData(); } catch(e) { showAlert('Error al eliminar', 'error'); } }
         
         document.getElementById('toggleSidebar').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('closed'); document.getElementById('mainContent').classList.toggle('expanded'); });
-        document.addEventListener('DOMContentLoaded', () => { loadSidebarMenu(); refreshData(); });
+        document.addEventListener('DOMContentLoaded', () => { loadSidebarMenu(); initDataTable(); });
     </script>
 </body>
 </html>

@@ -2,15 +2,14 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import date, datetime
 
-class Evaluation(BaseModel):
+class Application(BaseModel):
     id: Optional[int] = None
-    internship_assignment_id: int
-    evaluator_id: int
-    evaluation_type: str
-    score: float
+    offer_id: int
+    student_id: int
+    empresa_id: int
+    tutor_id: Optional[int] = None
+    status: str = "pendiente"
+    application_date: date
     comments: Optional[str] = None
-    evaluation_date: date
-    criteria_json: Optional[str] = None
-    # Campos de auditoría
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

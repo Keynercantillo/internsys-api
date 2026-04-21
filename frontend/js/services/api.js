@@ -114,7 +114,74 @@ const UserService = {
 };
 
 // ============================================
-// EXPOSICIÓN GLOBAL (para usar en el HTML)
+// SERVICIO DE CONVENIOS
+// ============================================
+const AgreementService = {
+    getAll: () => apiRequest('/get_agreements/'),
+    getById: (id) => apiRequest(`/get_agreement/${id}`),
+    create: (data) => apiRequest('/create_agreement', 'POST', data),
+    update: (id, data) => apiRequest(`/update_agreement/${id}`, 'PUT', data),
+    delete: (id) => apiRequest(`/delete_agreement/${id}`, 'DELETE')
+};
+
+// ============================================
+// SERVICIO DE VISITAS
+// ============================================
+const VisitService = {
+    getAll: () => apiRequest('/get_followup_visits/'),
+    getById: (id) => apiRequest(`/get_followup_visit/${id}`),
+    create: (data) => apiRequest('/create_followup_visit', 'POST', data),
+    update: (id, data) => apiRequest(`/update_followup_visit/${id}`, 'PUT', data),
+    delete: (id) => apiRequest(`/delete_followup_visit/${id}`, 'DELETE')
+};
+
+// ============================================
+// SERVICIO DE NOTIFICACIONES
+// ============================================
+const NotificationService = {
+    getAll: () => apiRequest('/get_notifications/'),
+    getById: (id) => apiRequest(`/get_notification/${id}`),
+    create: (data) => apiRequest('/create_notification', 'POST', data),
+    update: (id, data) => apiRequest(`/update_notification/${id}`, 'PUT', data),
+    delete: (id) => apiRequest(`/delete_notification/${id}`, 'DELETE')
+};
+
+// ============================================
+// SERVICIO DE PERFILES
+// ============================================
+const ProfileService = {
+    getAll: () => apiRequest('/get_profiles/'),
+    getById: (id) => apiRequest(`/get_profile/${id}`),
+    getByUser: (userId) => apiRequest(`/get_profile_by_user/${userId}`),
+    create: (data) => apiRequest('/create_profile', 'POST', data),
+    update: (id, data) => apiRequest(`/update_profile/${id}`, 'PUT', data),
+    delete: (id) => apiRequest(`/delete_profile/${id}`, 'DELETE')
+};
+
+// ============================================
+// SERVICIO DE REPORTES
+// ============================================
+const ReportService = {
+    getAll: () => apiRequest('/get_reports/'),
+    getById: (id) => apiRequest(`/get_report/${id}`),
+    create: (data) => apiRequest('/create_report', 'POST', data),
+    update: (id, data) => apiRequest(`/update_report/${id}`, 'PUT', data),
+    delete: (id) => apiRequest(`/delete_report/${id}`, 'DELETE')
+};
+
+// ============================================
+// SERVICIO DE POSTULACIONES (NUEVO)
+// ============================================
+const ApplicationService = {
+    getAll: () => apiRequest('/get_applications/'),
+    getByCompany: (empresaId) => apiRequest(`/get_applications_by_company/${empresaId}`),
+    create: (data) => apiRequest('/create_application', 'POST', data),
+    updateStatus: (id, status, tutorId = null) => apiRequest(`/update_application_status/${id}?status=${status}&tutor_id=${tutorId || ''}`, 'PUT'),
+    delete: (id) => apiRequest(`/delete_application/${id}`, 'DELETE')
+};
+
+// ============================================
+// EXPOSICIÓN GLOBAL
 // ============================================
 window.AssignmentService = AssignmentService;
 window.EvaluationService = EvaluationService;
@@ -123,11 +190,16 @@ window.StudentService = StudentService;
 window.CompanyService = CompanyService;
 window.TutorService = TutorService;
 window.UserService = UserService;
+window.AgreementService = AgreementService;
+window.VisitService = VisitService;
+window.NotificationService = NotificationService;
+window.ProfileService = ProfileService;
+window.ReportService = ReportService;
+window.ApplicationService = ApplicationService;
 
-// Mensaje de confirmación
 console.log("=".repeat(50));
 console.log("✅ API Services Cargados Correctamente");
 console.log("✅ AssignmentService:", typeof AssignmentService);
-console.log("✅ EvaluationService:", typeof EvaluationService);
 console.log("✅ OfferService:", typeof OfferService);
-console.log("=".repeat(50));    
+console.log("✅ ApplicationService:", typeof ApplicationService);
+console.log("=".repeat(50));

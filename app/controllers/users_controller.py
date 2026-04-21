@@ -4,6 +4,8 @@ from config.db_config import get_db_connection
 from models.users_model import User
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime
+from utils.email_service import EmailService
+
 
 class UsersController:
     
@@ -16,15 +18,25 @@ class UsersController:
             cursor = conn.cursor()
             
             empresa_id = getattr(user, 'empresa_id', None)
+            now = datetime.now()
             
-            # Insertar en users
             cursor.execute(
-                """INSERT INTO users (nombre, apellido, cedula, edad, usuario, contraseña, rol, email, is_active, last_login, empresa_id) 
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+                """INSERT INTO users (nombre, apellido, cedula, edad, usuario, contraseña, rol, email, is_active, last_login, empresa_id, created_at, updated_at) 
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
                 (user.nombre, user.apellido, user.cedula, user.edad, user.usuario, 
-                 user.contraseña, user.rol, user.email, user.is_active, user.last_login, empresa_id)
+                 user.contraseña, user.rol, user.email, user.is_active, user.last_login, empresa_id, now, now)
             )
             new_user_id = cursor.fetchone()[0]
+            
+            # ✅ NOTIFICAR NUEVO USUARIO
+            user_data = {
+                'id': new_user_id,
+                'nombre': user.nombre,
+                'apellido': user.apellido,
+                'email': user.email,
+                'rol': user.rol
+            }
+            EmailService.notificar_nuevo_usuario(user_data, "admin@internsys.com")
             
             # Si el rol es tutor o docente, insertar también en la tabla tutors
             if user.rol in ['tutor', 'docente']:
@@ -33,10 +45,10 @@ class UsersController:
                 especialidad = getattr(user, 'especialidad', None)
                 
                 cursor.execute(
-                    """INSERT INTO tutors (nombre, apellido, cedula, edad, usuario, contraseña, tipo, telefono, email, empresa_id, especialidad) 
-                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                    """INSERT INTO tutors (nombre, apellido, cedula, edad, usuario, contraseña, tipo, telefono, email, empresa_id, especialidad, created_at, updated_at) 
+                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                     (user.nombre, user.apellido, user.cedula, user.edad, user.usuario, 
-                     user.contraseña, tipo, telefono, user.email, empresa_id, especialidad)
+                     user.contraseña, tipo, telefono, user.email, empresa_id, especialidad, now, now)
                 )
             
             conn.commit()
@@ -60,7 +72,7 @@ class UsersController:
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT id, nombre, apellido, cedula, edad, usuario, contraseña, rol, email, is_active, last_login, empresa_id FROM users WHERE id = %s", 
+                "SELECT id, nombre, apellido, cedula, edad, usuario, contraseña, rol, email, is_active, last_login, empresa_id, created_at, updated_at FROM users WHERE id = %s", 
                 (user_id,)
             )
             result = cursor.fetchone()
@@ -79,7 +91,9 @@ class UsersController:
                 'email': result[8],
                 'is_active': result[9],
                 'last_login': result[10],
-                'empresa_id': result[11]
+                'empresa_id': result[11],
+                'created_at': result[12],
+                'updated_at': result[13]
             }
             return jsonable_encoder(content)
         except psycopg2.Error as err:
@@ -97,7 +111,7 @@ class UsersController:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT id, nombre, apellido, cedula, edad, usuario, contraseña, rol, email, is_active, last_login, empresa_id FROM users ORDER BY id DESC")
+            cursor.execute("SELECT id, nombre, apellido, cedula, edad, usuario, contraseña, rol, email, is_active, last_login, empresa_id, created_at, updated_at FROM users ORDER BY id DESC")
             result = cursor.fetchall()
             payload = []
             for data in result:
@@ -113,7 +127,9 @@ class UsersController:
                     'email': data[8],
                     'is_active': data[9],
                     'last_login': data[10],
-                    'empresa_id': data[11]
+                    'empresa_id': data[11],
+                    'created_at': data[12],
+                    'updated_at': data[13]
                 }
                 payload.append(content)
             if payload:
@@ -136,7 +152,7 @@ class UsersController:
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT id, nombre, apellido, cedula, edad, usuario, contraseña, rol, email, is_active, last_login, empresa_id FROM users WHERE rol = %s", 
+                "SELECT id, nombre, apellido, cedula, edad, usuario, contraseña, rol, email, is_active, last_login, empresa_id, created_at, updated_at FROM users WHERE rol = %s", 
                 (rol,)
             )
             result = cursor.fetchall()
@@ -154,7 +170,9 @@ class UsersController:
                     'email': data[8],
                     'is_active': data[9],
                     'last_login': data[10],
-                    'empresa_id': data[11]
+                    'empresa_id': data[11],
+                    'created_at': data[12],
+                    'updated_at': data[13]
                 }
                 payload.append(content)
             if payload:
@@ -177,7 +195,7 @@ class UsersController:
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT id, nombre, apellido, cedula, edad, usuario, contraseña, rol, email, is_active, last_login, empresa_id FROM users WHERE email = %s", 
+                "SELECT id, nombre, apellido, cedula, edad, usuario, contraseña, rol, email, is_active, last_login, empresa_id, created_at, updated_at FROM users WHERE email = %s", 
                 (email,)
             )
             result = cursor.fetchone()
@@ -196,7 +214,9 @@ class UsersController:
                 'email': result[8],
                 'is_active': result[9],
                 'last_login': result[10],
-                'empresa_id': result[11]
+                'empresa_id': result[11],
+                'created_at': result[12],
+                'updated_at': result[13]
             }
             return jsonable_encoder(content)
         except psycopg2.Error as err:
@@ -216,44 +236,40 @@ class UsersController:
             cursor = conn.cursor()
             
             empresa_id = getattr(user, 'empresa_id', None)
+            now = datetime.now()
             
-            # Actualizar users
             cursor.execute(
                 """UPDATE users 
                    SET nombre=%s, apellido=%s, cedula=%s, edad=%s, usuario=%s, 
-                       contraseña=%s, rol=%s, email=%s, is_active=%s, empresa_id=%s 
+                       contraseña=%s, rol=%s, email=%s, is_active=%s, empresa_id=%s, updated_at=%s 
                    WHERE id=%s""",
                 (user.nombre, user.apellido, user.cedula, user.edad, user.usuario, 
-                 user.contraseña, user.rol, user.email, user.is_active, empresa_id, user_id),
+                 user.contraseña, user.rol, user.email, user.is_active, empresa_id, now, user_id),
             )
             
-            # Si el rol es tutor o docente, actualizar o insertar en tutors
             if user.rol in ['tutor', 'docente']:
                 telefono = getattr(user, 'telefono', None)
                 especialidad = getattr(user, 'especialidad', None)
                 tipo = user.rol
                 
-                # Verificar si ya existe en tutors
                 cursor.execute("SELECT id FROM tutors WHERE email = %s", (user.email,))
                 existing = cursor.fetchone()
                 
                 if existing:
-                    # Actualizar tutor existente
                     cursor.execute(
                         """UPDATE tutors 
                            SET nombre=%s, apellido=%s, cedula=%s, edad=%s, usuario=%s, 
-                               contraseña=%s, tipo=%s, telefono=%s, email=%s, empresa_id=%s, especialidad=%s 
+                               contraseña=%s, tipo=%s, telefono=%s, email=%s, empresa_id=%s, especialidad=%s, updated_at=%s 
                            WHERE email=%s""",
                         (user.nombre, user.apellido, user.cedula, user.edad, user.usuario, 
-                         user.contraseña, tipo, telefono, user.email, empresa_id, especialidad, user.email)
+                         user.contraseña, tipo, telefono, user.email, empresa_id, especialidad, now, user.email)
                     )
                 else:
-                    # Insertar nuevo tutor
                     cursor.execute(
-                        """INSERT INTO tutors (nombre, apellido, cedula, edad, usuario, contraseña, tipo, telefono, email, empresa_id, especialidad) 
-                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                        """INSERT INTO tutors (nombre, apellido, cedula, edad, usuario, contraseña, tipo, telefono, email, empresa_id, especialidad, created_at, updated_at) 
+                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                         (user.nombre, user.apellido, user.cedula, user.edad, user.usuario, 
-                         user.contraseña, tipo, telefono, user.email, empresa_id, especialidad)
+                         user.contraseña, tipo, telefono, user.email, empresa_id, especialidad, now, now)
                     )
             
             if cursor.rowcount == 0 and user.rol not in ['tutor', 'docente']:
@@ -280,17 +296,24 @@ class UsersController:
             conn = get_db_connection()
             cursor = conn.cursor()
             
-            # Obtener email y rol del usuario antes de eliminar
-            cursor.execute("SELECT email, rol FROM users WHERE id = %s", (user_id,))
+            cursor.execute("SELECT id, nombre, apellido, email, rol FROM users WHERE id = %s", (user_id,))
             user_data = cursor.fetchone()
             
             if user_data:
-                email, rol = user_data
-                # Si es tutor o docente, eliminar también de tutors
-                if rol in ['tutor', 'docente']:
-                    cursor.execute("DELETE FROM tutors WHERE email = %s", (email,))
+                user_info = {
+                    'id': user_data[0],
+                    'nombre': user_data[1],
+                    'apellido': user_data[2],
+                    'email': user_data[3],
+                    'rol': user_data[4]
+                }
+                
+                # ✅ NOTIFICAR ELIMINACIÓN DE USUARIO
+                EmailService.notificar_eliminacion_usuario(user_info, "admin@internsys.com")
+                
+                if user_data[4] in ['tutor', 'docente']:
+                    cursor.execute("DELETE FROM tutors WHERE email = %s", (user_data[3],))
             
-            # Eliminar de users
             cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
             
             if cursor.rowcount == 0:
@@ -325,7 +348,6 @@ class UsersController:
             if not result:
                 raise HTTPException(status_code=401, detail="Credenciales inválidas o usuario inactivo")
             
-            # Actualizar último login
             cursor.execute(
                 "UPDATE users SET last_login = NOW() WHERE id = %s",
                 (result[0],)
