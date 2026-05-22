@@ -7,118 +7,581 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="css/styles.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="components/main-components.js" type="module"></script>
+    
     <style>
-        body { background: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .sidebar { position: fixed; top: 0; left: 0; width: 260px; height: 100%; background: #1e2a3a; color: white; transition: 0.3s; z-index: 1000; }
+        :root {
+            --verde: #22c55e;
+            --verde-dark: #16a34a;
+            --verde-light: #dcfce7;
+            --sidebar-bg: #0f172a;
+            --sidebar-hover: #1e293b;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --radius: 16px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; color: var(--text-main); }
+
+        .sidebar {
+            position: fixed; top: 0; left: 0; width: 260px; height: 100%;
+            background: var(--sidebar-bg); color: white; transition: 0.3s ease; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
         .sidebar.closed { margin-left: -260px; }
-        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #2c3e50; }
-        .sidebar-header h4 i { margin-right: 10px; color: #27ae60; }
-        .sidebar-menu { list-style: none; padding: 0; margin-top: 20px; }
-        .sidebar-menu .menu-item { display: block; padding: 12px 20px; color: #ecf0f1; text-decoration: none; transition: 0.3s; }
-        .sidebar-menu .menu-item:hover, .sidebar-menu .menu-item.active { background: #27ae60; color: white; }
-        .sidebar-menu .menu-item i { width: 25px; margin-right: 10px; }
-        .main-content { margin-left: 260px; transition: 0.3s; min-height: 100vh; }
+        .sidebar-header {
+            padding: 24px 20px 20px; border-bottom: 1px solid #1e293b;
+            display: flex; align-items: center; gap: 12px;
+        }
+        .sidebar-logo {
+            width: 40px; height: 40px; background: var(--verde);
+            border-radius: 10px; display: flex; align-items: center; justify-content: center;
+            font-size: 18px; flex-shrink: 0;
+        }
+        .sidebar-header h4 { font-size: 17px; font-weight: 700; color: white; margin: 0; line-height: 1.2; }
+        .sidebar-header small { font-size: 11px; color: #94a3b8; font-weight: 500; }
+        .sidebar-menu { list-style: none; padding: 12px 10px; flex: 1; }
+        .sidebar-menu li { margin-bottom: 2px; }
+        .sidebar-menu .menu-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 11px 14px; color: #94a3b8; text-decoration: none;
+            border-radius: 10px; transition: 0.2s; font-size: 14px; font-weight: 500;
+            cursor: pointer;
+        }
+        .sidebar-menu .menu-item:hover { background: var(--sidebar-hover); color: white; }
+        .sidebar-menu .menu-item.active { background: var(--verde); color: white; }
+        .sidebar-menu .menu-item i { width: 18px; text-align: center; }
+        .sidebar-footer { padding: 16px 10px; border-top: 1px solid #1e293b; }
+        .sidebar-footer a {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 14px; color: #f87171; text-decoration: none;
+            border-radius: 10px; transition: 0.2s; font-size: 14px; font-weight: 500;
+            cursor: pointer;
+        }
+        .sidebar-footer a:hover { background: #450a0a; }
+
+        .main-content { margin-left: 260px; transition: 0.3s ease; min-height: 100vh; }
         .main-content.expanded { margin-left: 0; }
-        .navbar { padding: 0.75rem 1.5rem; background: #27ae60; color: white; }
-        .welcome-banner { background: linear-gradient(135deg, #27ae60, #229954); border-radius: 15px; padding: 30px; color: white; margin-bottom: 30px; }
-        .stat-card { background: white; border-radius: 15px; padding: 20px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.08); transition: transform 0.3s; cursor: pointer; }
-        .stat-card:hover { transform: translateY(-5px); }
-        .stat-card i { font-size: 48px; margin-bottom: 15px; }
-        .stat-card .number { font-size: 32px; font-weight: bold; margin: 10px 0; }
-        .info-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); margin-bottom: 20px; }
-        @media (max-width: 768px) { .sidebar { margin-left: -260px; } .main-content { margin-left: 0; } }
+
+        .topbar {
+            background: var(--card-bg); border-bottom: 1px solid #e2e8f0;
+            padding: 14px 28px; display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 16px; }
+        .topbar-title { font-size: 16px; font-weight: 700; color: var(--text-main); }
+        .btn-toggle { background: none; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 10px; cursor: pointer; color: var(--text-muted); }
+        .btn-toggle:hover { background: var(--bg); }
+        .user-chip {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--bg); border-radius: 50px; padding: 6px 14px 6px 6px;
+            cursor: pointer; border: 1px solid #e2e8f0; text-decoration: none;
+        }
+        .user-avatar {
+            width: 32px; height: 32px; background: var(--verde);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 13px;
+        }
+        .user-chip span { font-size: 14px; font-weight: 600; color: var(--text-main); }
+
+        .content-wrapper { padding: 28px; }
+
+        .welcome-banner {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+            border-radius: var(--radius); padding: 28px 32px; color: white;
+            margin-bottom: 28px; position: relative; overflow: hidden;
+        }
+        .banner-title { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+        .banner-subtitle { font-size: 14px; color: #94a3b8; font-weight: 400; }
+        .badge-rol {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(34,197,94,0.2); color: var(--verde);
+            border: 1px solid rgba(34,197,94,0.3);
+            padding: 4px 12px; border-radius: 50px; font-size: 12px; font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .btn-refresh {
+            background: var(--verde); color: white; border: none;
+            border-radius: 10px; padding: 10px 20px; font-size: 14px;
+            font-weight: 600; cursor: pointer; font-family: inherit;
+            display: flex; align-items: center; gap: 8px; transition: 0.2s;
+        }
+        .btn-refresh:hover { background: var(--verde-dark); }
+
+        .stat-card {
+            background: var(--card-bg); border-radius: var(--radius);
+            padding: 22px; display: flex; align-items: center; gap: 18px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;
+            cursor: pointer; transition: 0.2s; text-decoration: none; color: inherit;
+        }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); border-color: var(--verde); }
+        .stat-icon {
+            width: 54px; height: 54px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; flex-shrink: 0;
+        }
+        .stat-icon.blue { background: #dbeafe; color: #2563eb; }
+        .stat-icon.green { background: var(--verde-light); color: var(--verde-dark); }
+        .stat-icon.yellow { background: #fef9c3; color: #ca8a04; }
+        .stat-icon.purple { background: #ede9fe; color: #7c3aed; }
+        .stat-number { font-size: 28px; font-weight: 800; line-height: 1; }
+        .stat-label { font-size: 13px; color: var(--text-muted); margin-top: 4px; font-weight: 500; }
+
+        .info-card {
+            background: var(--card-bg); border-radius: var(--radius); padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;
+            height: 100%;
+        }
+        .card-title-section {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
+            padding-bottom: 16px; border-bottom: 1px solid #f1f5f9;
+        }
+        .card-title-section .icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; font-size: 16px;
+        }
+        .card-title-section h5 { font-size: 15px; font-weight: 700; margin: 0; }
+
+        .info-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f8fafc; }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+        .info-value { font-size: 13px; font-weight: 600; color: var(--text-main); text-align: right; max-width: 60%; }
+
+        .progress-wrapper { margin-top: 8px; }
+        .progress-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .progress-label { font-size: 13px; font-weight: 600; }
+        .progress-pct { font-size: 13px; font-weight: 800; color: var(--verde-dark); }
+        .custom-progress { height: 14px; background: #f1f5f9; border-radius: 50px; overflow: hidden; }
+        .custom-progress-bar {
+            height: 100%; background: linear-gradient(90deg, var(--verde), #86efac);
+            border-radius: 50px; transition: width 0.8s ease;
+        }
+        .progress-hours { font-size: 12px; color: var(--text-muted); margin-top: 8px; text-align: center; }
+        .status-badge { display: inline-block; padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 600; }
+        .status-badge.activo { background: var(--verde-light); color: var(--verde-dark); }
+        .status-badge.pendiente { background: #fef9c3; color: #92400e; }
+        .status-badge.completado { background: #dbeafe; color: #1d4ed8; }
+
+        .table-container { background: white; border-radius: 16px; padding: 20px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
+        .btn-view { background: #3b82f6; color: white; border: none; padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+        .btn-report { background: #ef4444; color: white; border: none; padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+        .btn-apply { background: #22c55e; color: white; border: none; padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+        .btn-secondary { background: #94a3b8; color: white; border: none; padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: not-allowed; }
+        .badge-low { background: #e74c3c; color: white; padding: 3px 8px; border-radius: 20px; font-size: 11px; }
+        .badge-medium { background: #f39c12; color: white; padding: 3px 8px; border-radius: 20px; font-size: 11px; }
+        .badge-high { background: #27ae60; color: white; padding: 3px 8px; border-radius: 20px; font-size: 11px; }
+
+        @media (max-width: 768px) {
+            .sidebar { margin-left: -260px; }
+            .main-content { margin-left: 0; }
+            .content-wrapper { padding: 16px; }
+        }
     </style>
 </head>
 <body>
     <div class="sidebar" id="sidebar">
-        <div class="sidebar-header"><h4><i class="fas fa-graduation-cap"></i> InternSys</h4><small>Estudiante</small></div>
+        <div class="sidebar-header">
+            <div class="sidebar-logo"><i class="fas fa-graduation-cap"></i></div>
+            <div><h4>InternSys</h4><small>Portal Estudiantil</small></div>
+        </div>
         <ul class="sidebar-menu">
-            <li><a href="dashboard-student.html" class="menu-item active"><i class="fas fa-tachometer-alt"></i> Mi Dashboard</a></li>
-            <li><a href="my-profile.html" class="menu-item"><i class="fas fa-user"></i> Mi Perfil</a></li>
-            <li><a href="my-assignments.html" class="menu-item"><i class="fas fa-tasks"></i> Mis Asignaciones</a></li>
-            <li><a href="my-evaluations.html" class="menu-item"><i class="fas fa-star"></i> Mis Evaluaciones</a></li>
-            <li><a href="offers.html" class="menu-item"><i class="fas fa-briefcase"></i> Ofertas</a></li>
+            <li><a class="menu-item" onclick="loadPage('dashboard')"><i class="fas fa-home"></i> Mi Dashboard</a></li>
+            <li><a class="menu-item" onclick="loadPage('perfil')"><i class="fas fa-user"></i> Mi Perfil</a></li>
+            <li><a class="menu-item" onclick="loadPage('asignaciones')"><i class="fas fa-tasks"></i> Mis Asignaciones</a></li>
+            <li><a class="menu-item" onclick="loadPage('evaluaciones')"><i class="fas fa-star"></i> Mis Evaluaciones</a></li>
+            <li><a class="menu-item" onclick="loadPage('ofertas')"><i class="fas fa-briefcase"></i> Ofertas</a></li>
         </ul>
+        <div class="sidebar-footer">
+            <a onclick="cerrarSesion()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+        </div>
     </div>
 
     <div class="main-content" id="mainContent">
-        <nav class="navbar">
-            <div class="container-fluid">
-                <button class="btn btn-light" id="toggleSidebar"><i class="fas fa-bars"></i></button>
-                <span class="navbar-brand mb-0 h4">Mi Dashboard</span>
-                <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-user"></i> <span id="userName">Estudiante</span></button>
-                    <ul class="dropdown-menu"><li><a class="dropdown-item" href="my-profile.html">Mi Perfil</a></li><li><hr class="dropdown-divider"></li><li><a class="dropdown-item text-danger" href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li></ul>
+        <div class="topbar">
+            <div class="topbar-left">
+                <button class="btn-toggle" id="toggleSidebar"><i class="fas fa-bars"></i></button>
+                <span class="topbar-title" id="pageTitle">Mi Dashboard</span>
+            </div>
+            <div class="dropdown">
+                <a class="user-chip dropdown-toggle" data-bs-toggle="dropdown">
+                    <div class="user-avatar" id="userAvatar">E</div>
+                    <span id="userName">Estudiante</span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" onclick="loadPage('perfil')"><i class="fas fa-user me-2"></i>Mi Perfil</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" onclick="cerrarSesion()"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="content-wrapper" id="dynamicContent">
+            <div class="text-center p-5">Cargando...</div>
+        </div>
+    </div>
+
+    <!-- Modal para Reportar Evaluación -->
+    <div class="modal fade" id="reportarModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="fas fa-flag me-2"></i>Reportar Evaluación</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-            </div>
-        </nav>
-
-        <div class="container-fluid mt-4">
-            <div class="welcome-banner">
-                <div class="row align-items-center">
-                    <div class="col-md-8"><h2><i class="fas fa-graduation-cap me-2"></i>¡Bienvenido, <span id="studentName">Estudiante</span>!</h2><p>Aquí puedes ver el estado de tu pasantía y evaluaciones.</p></div>
-                    <div class="col-md-4 text-end"><custom-button variant="primary" onclick="refreshData()"><i class="fas fa-sync-alt"></i> Refrescar</custom-button></div>
+                <div class="modal-body">
+                    <form id="reporteForm">
+                        <input type="hidden" id="reporte_evaluation_id">
+                        <div class="mb-3">
+                            <label class="form-label">Evaluación</label>
+                            <input type="text" class="form-control" id="reporte_evaluation_info" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Puntaje Actual</label>
+                            <input type="text" class="form-control" id="reporte_current_score" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Motivo del Reporte *</label>
+                            <select class="form-control" id="reporte_motivo" required>
+                                <option value="">Seleccione un motivo</option>
+                                <option value="error_calificacion">Error en la calificación</option>
+                                <option value="injustificada">Evaluación injustificada</option>
+                                <option value="falta_retroalimentacion">Falta de retroalimentación</option>
+                                <option value="criterios_no_claros">Criterios de evaluación no claros</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descripción *</label>
+                            <textarea class="form-control" id="reporte_descripcion" rows="4" placeholder="Explique detalladamente..." required></textarea>
+                        </div>
+                    </form>
                 </div>
-            </div>
-
-            <div class="row mb-4">
-                <div class="col-md-4 mb-3"><div class="stat-card" onclick="window.location.href='my-assignments.html'"><i class="fas fa-tasks text-primary"></i><div class="number" id="totalAssignments">0</div><p>Mis Asignaciones</p></div></div>
-                <div class="col-md-4 mb-3"><div class="stat-card" onclick="window.location.href='my-assignments.html'"><i class="fas fa-check-circle text-success"></i><div class="number" id="activeAssignments">0</div><p>Activas</p></div></div>
-                <div class="col-md-4 mb-3"><div class="stat-card" onclick="window.location.href='my-evaluations.html'"><i class="fas fa-star text-warning"></i><div class="number" id="totalEvaluations">0</div><p>Evaluaciones</p></div></div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-6 mb-4"><div class="info-card"><h5><i class="fas fa-id-card me-2 text-success"></i>Mi Información</h5><hr><p><strong>Nombre:</strong> <span id="fullName">-</span></p><p><strong>Cédula:</strong> <span id="cedula">-</span></p><p><strong>Matrícula:</strong> <span id="matricula">-</span></p><p><strong>Carrera:</strong> <span id="carrera">-</span></p><p><strong>Semestre:</strong> <span id="semester">-</span></p><p><strong>Promedio:</strong> <span id="promedio">-</span></p></div></div>
-                <div class="col-md-6 mb-4"><div class="info-card"><h5><i class="fas fa-chart-line me-2 text-info"></i>Mi Progreso</h5><hr><div class="text-center"><div class="progress mb-3" style="height: 30px;"><div id="progressBar" class="progress-bar bg-success" style="width: 0%; line-height: 30px;">0%</div></div><p><strong>Horas completadas:</strong> <span id="completedHours">0</span> / <span id="totalHours">0</span></p></div></div></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" onclick="enviarReporte()">Enviar Reporte</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="js/services/api.js"></script>
     <script>
-        function getCurrentUser() { const user = localStorage.getItem('internsys_user'); return user ? JSON.parse(user) : null; }
-        function cerrarSesion() { localStorage.removeItem('internsys_user'); window.location.href = 'index.html'; }
-        function showAlert(msg, type) { if(window.showAlert) window.showAlert(msg, type); else alert(msg); }
-        
-        async function loadDashboard() {
-            const user = getCurrentUser();
-            if(!user || user.rol !== 'estudiante') { window.location.href = 'index.html'; return; }
-            document.getElementById('studentName').innerText = user.nombre || 'Estudiante';
-            document.getElementById('userName').innerText = user.nombre || 'Estudiante';
-            document.getElementById('fullName').innerText = `${user.nombre} ${user.apellido}`;
-            document.getElementById('cedula').innerText = user.cedula || 'N/A';
-            document.getElementById('matricula').innerText = user.matricula || 'N/A';
-            document.getElementById('carrera').innerText = user.carrera || 'N/A';
-            document.getElementById('semester').innerText = user.semester || 'N/A';
-            document.getElementById('promedio').innerText = user.promedio || 'N/A';
-            
-            const assignments = await AssignmentService.getAll();
-            const offers = await OfferService.getAll();
-            const myAssignments = (assignments.result || []).filter(a => a.student_id === user.id);
-            const activeAssignments = myAssignments.filter(a => a.status === 'activo').length;
-            const myEvaluations = (await EvaluationService.getByStudent(user.id)).result || [];
-            document.getElementById('totalAssignments').innerText = myAssignments.length;
-            document.getElementById('activeAssignments').innerText = activeAssignments;
-            document.getElementById('totalEvaluations').innerText = myEvaluations.length;
-            
-            if(myAssignments.length > 0) {
-                const assignment = myAssignments[0];
-                const completed = assignment.completed_hours || 0;
-                const total = assignment.total_hours || 0;
-                const porcentaje = total > 0 ? Math.round((completed / total) * 100) : 0;
-                document.getElementById('progressBar').style.width = `${porcentaje}%`;
-                document.getElementById('progressBar').innerText = `${porcentaje}%`;
-                document.getElementById('completedHours').innerText = completed;
-                document.getElementById('totalHours').innerText = total;
+        let currentUser = null;
+        let currentStudentId = null;
+        let currentTutorId = null;
+
+        function getCurrentUser() {
+            const u = localStorage.getItem('internsys_user');
+            return u ? JSON.parse(u) : null;
+        }
+
+        function cerrarSesion() {
+            Swal.fire({
+                title: '¿Cerrar sesión?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#22c55e',
+                confirmButtonText: 'Sí, salir'
+            }).then(r => {
+                if (r.isConfirmed) {
+                    localStorage.removeItem('internsys_user');
+                    window.location.href = 'index.html';
+                }
+            });
+        }
+
+        function showAlert(msg, type) {
+            Swal.fire({ title: type === 'success' ? 'Éxito' : 'Información', text: msg, icon: type, confirmButtonColor: '#22c55e' });
+        }
+
+        async function obtenerDocenteAsignado() {
+            try {
+                const assignments = await AssignmentService.getAll();
+                const myAssignments = (assignments.result || []).filter(a => a.student_id === currentStudentId || a.estudiante_id === currentStudentId);
+                if (myAssignments.length > 0) {
+                    currentTutorId = myAssignments[0].tutor_id || myAssignments[0].docente_id;
+                    return currentTutorId;
+                }
+                return null;
+            } catch(e) {
+                return null;
             }
         }
+
+        async function getOfferTitle(offerId) {
+            try {
+                const offers = await OfferService.getAll();
+                const offer = (offers.result || []).find(o => o.id == offerId);
+                return offer?.title || offer?.titulo || `Oferta ${offerId}`;
+            } catch(e) {
+                return `Oferta ${offerId}`;
+            }
+        }
+
+        async function postularOferta(offerId) {
+            let existingApps = [];
+            try {
+                const appRes = await ApplicationService.getAll();
+                existingApps = (appRes.result || []).filter(a => a.student_id === currentStudentId && a.offer_id === offerId);
+            } catch(e) {
+                existingApps = JSON.parse(localStorage.getItem('internsys_applications') || '[]');
+                existingApps = existingApps.filter(a => a.student_id === currentStudentId && a.offer_id === offerId);
+            }
+            
+            if (existingApps.length > 0) {
+                showAlert('Ya has postulado a esta oferta', 'warning');
+                loadPage('ofertas');
+                return;
+            }
+            
+            const confirm = await Swal.fire({
+                title: '¿Postular a esta oferta?',
+                text: 'Tu solicitud será revisada por el administrador',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#22c55e',
+                confirmButtonText: 'Sí, postular',
+                cancelButtonText: 'Cancelar'
+            });
+            
+            if (confirm.isConfirmed) {
+                const application = {
+                    student_id: currentStudentId,
+                    offer_id: offerId,
+                    status: 'pendiente',
+                    application_date: new Date().toISOString().split('T')[0],
+                    created_at: new Date().toISOString(),
+                    student_name: `${currentUser.nombre} ${currentUser.apellido || ''}`,
+                    offer_title: await getOfferTitle(offerId)
+                };
+                
+                try {
+                    await ApplicationService.create(application);
+                    showAlert('Postulación enviada correctamente', 'success');
+                    loadPage('ofertas');
+                } catch(e) {
+                    showAlert('Error al postular', 'error');
+                }
+            }
+        }
+
+        async function loadPage(page) {
+            const user = getCurrentUser();
+            if (!user || user.rol !== 'estudiante') { window.location.href = 'index.html'; return; }
+            
+            currentUser = user;
+            currentStudentId = user.id;
+            document.getElementById('userName').innerText = user.nombre || 'Estudiante';
+            document.getElementById('userAvatar').innerText = (user.nombre || 'E').charAt(0).toUpperCase();
+            document.getElementById('pageTitle').innerText = page === 'dashboard' ? 'Mi Dashboard' : page === 'perfil' ? 'Mi Perfil' : page === 'asignaciones' ? 'Mis Asignaciones' : page === 'evaluaciones' ? 'Mis Evaluaciones' : 'Ofertas Disponibles';
+            
+            document.querySelectorAll('.sidebar-menu .menu-item').forEach(item => {
+                if (item.getAttribute('onclick').includes(page)) item.classList.add('active');
+                else item.classList.remove('active');
+            });
+            
+            const container = document.getElementById('dynamicContent');
+            container.innerHTML = '<div class="text-center p-5"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>';
+            
+            try {
+                if (page === 'dashboard') await loadDashboard(container);
+                else if (page === 'perfil') await loadPerfil(container);
+                else if (page === 'asignaciones') await loadAsignaciones(container);
+                else if (page === 'evaluaciones') await loadEvaluaciones(container);
+                else if (page === 'ofertas') await loadOfertas(container);
+            } catch(e) {
+                container.innerHTML = '<div class="alert alert-danger">Error al cargar los datos</div>';
+            }
+        }
+
+        async function loadDashboard(container) {
+            try {
+                await obtenerDocenteAsignado();
+                const assignRes = await AssignmentService.getAll();
+                const allAssignments = assignRes.result || [];
+                const myAssignments = allAssignments.filter(a => a.student_id === currentStudentId || a.estudiante_id === currentStudentId);
+                const activeCount = myAssignments.filter(a => a.status === 'activo' || a.estado === 'activo').length;
+                
+                let completedHours = 0, totalHours = 0, progressPct = 0;
+                if (myAssignments.length > 0) {
+                    const asig = myAssignments[0];
+                    completedHours = asig.completed_hours || asig.horas_completadas || 0;
+                    totalHours = asig.total_hours || asig.horas_totales || 0;
+                    progressPct = totalHours > 0 ? Math.round((completedHours / totalHours) * 100) : 0;
+                }
+                
+                let evaluations = [];
+                if (currentTutorId) {
+                    try {
+                        const evalRes = await EvaluationService.getByTutor(currentTutorId);
+                        evaluations = (evalRes.result || []).filter(e => e.student_id === currentStudentId);
+                    } catch(e) {}
+                }
+                
+                container.innerHTML = `
+                    <div class="welcome-banner">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <div class="badge-rol"><i class="fas fa-circle" style="font-size:8px;"></i> Estudiante</div>
+                                <div class="banner-title">¡Bienvenido, ${currentUser.nombre || 'Estudiante'}!</div>
+                                <div class="banner-subtitle">Revisa el estado de tu pasantía, asignaciones y evaluaciones.</div>
+                            </div>
+                            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                                <button class="btn-refresh" onclick="loadPage('dashboard')"><i class="fas fa-sync-alt"></i> Actualizar</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-6 col-md-3"><a class="stat-card" onclick="loadPage('asignaciones')"><div class="stat-icon blue"><i class="fas fa-tasks"></i></div><div><div class="stat-number">${myAssignments.length}</div><div class="stat-label">Asignaciones</div></div></a></div>
+                        <div class="col-6 col-md-3"><a class="stat-card" onclick="loadPage('asignaciones')"><div class="stat-icon green"><i class="fas fa-check-circle"></i></div><div><div class="stat-number">${activeCount}</div><div class="stat-label">Activas</div></div></a></div>
+                        <div class="col-6 col-md-3"><a class="stat-card" onclick="loadPage('evaluaciones')"><div class="stat-icon yellow"><i class="fas fa-star"></i></div><div><div class="stat-number">${evaluations.length}</div><div class="stat-label">Evaluaciones</div></div></a></div>
+                        <div class="col-6 col-md-3"><a class="stat-card"><div class="stat-icon purple"><i class="fas fa-clock"></i></div><div><div class="stat-number">${completedHours}</div><div class="stat-label">Horas completadas</div></div></a></div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-5"><div class="info-card"><div class="card-title-section"><div class="icon" style="background:#dcfce7;color:#16a34a;"><i class="fas fa-id-card"></i></div><h5>Mi Información</h5></div>
+                            <div class="info-row"><span class="info-label">Nombre completo</span><span class="info-value">${currentUser.nombre || ''} ${currentUser.apellido || ''}</span></div>
+                            <div class="info-row"><span class="info-label">Cédula</span><span class="info-value">${currentUser.cedula || '-'}</span></div>
+                            <div class="info-row"><span class="info-label">Matrícula</span><span class="info-value">${currentUser.matricula || '-'}</span></div>
+                            <div class="info-row"><span class="info-label">Carrera</span><span class="info-value">${currentUser.carrera || '-'}</span></div>
+                            <div class="info-row"><span class="info-label">Semestre</span><span class="info-value">${currentUser.semester || '-'}</span></div>
+                            <div class="info-row"><span class="info-label">Promedio</span><span class="info-value">${currentUser.promedio || '-'}</span></div>
+                        </div></div>
+                        <div class="col-md-7"><div class="info-card"><div class="card-title-section"><div class="icon" style="background:#dbeafe;color:#2563eb;"><i class="fas fa-chart-line"></i></div><h5>Progreso de Pasantía</h5></div>
+                            <div class="progress-wrapper"><div class="progress-header"><span class="progress-label">Horas completadas</span><span class="progress-pct">${progressPct}%</span></div>
+                            <div class="custom-progress"><div class="custom-progress-bar" style="width:${progressPct}%"></div></div>
+                            <div class="progress-hours">${completedHours} de ${totalHours} horas</div></div></div>
+                        </div>
+                    </div>
+                `;
+            } catch(e) { container.innerHTML = '<div class="alert alert-danger">Error cargando dashboard</div>'; }
+        }
+
+        async function loadPerfil(container) {
+            container.innerHTML = `
+                <div class="info-card"><div class="card-title-section"><div class="icon" style="background:#dcfce7;color:#16a34a;"><i class="fas fa-user"></i></div><h5>Mi Perfil</h5></div>
+                <div class="row"><div class="col-md-6"><div class="info-row"><span class="info-label">Nombre</span><span class="info-value">${currentUser.nombre || '-'}</span></div>
+                <div class="info-row"><span class="info-label">Apellido</span><span class="info-value">${currentUser.apellido || '-'}</span></div>
+                <div class="info-row"><span class="info-label">Cédula</span><span class="info-value">${currentUser.cedula || '-'}</span></div>
+                <div class="info-row"><span class="info-label">Email</span><span class="info-value">${currentUser.email || '-'}</span></div></div>
+                <div class="col-md-6"><div class="info-row"><span class="info-label">Teléfono</span><span class="info-value">${currentUser.telefono || '-'}</span></div>
+                <div class="info-row"><span class="info-label">Matrícula</span><span class="info-value">${currentUser.matricula || '-'}</span></div>
+                <div class="info-row"><span class="info-label">Carrera</span><span class="info-value">${currentUser.carrera || '-'}</span></div>
+                <div class="info-row"><span class="info-label">Semestre</span><span class="info-value">${currentUser.semester || '-'}</span></div></div></div></div>
+            `;
+        }
+
+        async function loadAsignaciones(container) {
+            const assignRes = await AssignmentService.getAll();
+            const myAssignments = (assignRes.result || []).filter(a => a.student_id === currentStudentId || a.estudiante_id === currentStudentId);
+            const tutors = await TutorService.getAll();
+            const tutorsMap = {};
+            (tutors.result || []).forEach(t => tutorsMap[t.id] = { nombre: `${t.nombre} ${t.apellido || ''}`, email: t.email, telefono: t.telefono });
+            
+            container.innerHTML = `<div class="table-container"><h5><i class="fas fa-tasks me-2"></i>Mis Asignaciones</h5><hr><div class="table-responsive"><table class="table table-striped"><thead><tr><th>ID</th><th>Empresa</th><th>Docente Asignado</th><th>Email Docente</th><th>Estado</th><th>Horas</th></tr></thead><tbody>${myAssignments.map(a => `<tr><td>${a.id}</td><td>${a.empresa_nombre || a.company_name || '-'}</td><td>${tutorsMap[a.tutor_id]?.nombre || 'Sin docente'}</td><td>${tutorsMap[a.tutor_id]?.email || '-'}</td><td><span class="status-badge ${a.status === 'activo' ? 'activo' : 'pendiente'}">${a.status || 'pendiente'}</span></td><td>${a.completed_hours || 0}/${a.total_hours || 0}</td></tr>`).join('')}${myAssignments.length === 0 ? '<tr><td colspan="6" class="text-center">No tienes asignaciones</td>' : ''}</tbody>} </table></div></div>`;
+        }
+
+        async function loadEvaluaciones(container) {
+            await obtenerDocenteAsignado();
+            let evaluations = [];
+            if (currentTutorId) {
+                try {
+                    const response = await fetch(`/api/get_evaluations_by_tutor/${currentTutorId}`);
+                    const data = await response.json();
+                    evaluations = (data.result || []).filter(e => e.student_id === currentStudentId);
+                } catch(e) {
+                    let allEvals = JSON.parse(localStorage.getItem('internsys_evaluations') || '[]');
+                    evaluations = allEvals.filter(e => e.tutor_id === currentTutorId && e.student_id === currentStudentId);
+                }
+            }
+            
+            let docenteNombre = 'Docente asignado';
+            if (currentTutorId) {
+                try {
+                    const tutorRes = await TutorService.getById(currentTutorId);
+                    const tutor = tutorRes.result || tutorRes;
+                    if (tutor) docenteNombre = `${tutor.nombre || ''} ${tutor.apellido || ''}`;
+                } catch(e) {}
+            }
+            
+            if (evaluations.length === 0) {
+                container.innerHTML = `<div class="table-container"><h5><i class="fas fa-star me-2"></i>Mis Evaluaciones</h5><hr><div class="text-center p-5"><i class="fas fa-info-circle fa-3x text-muted mb-3"></i><p class="text-muted">No hay evaluaciones del docente ${docenteNombre}</p><small>Las evaluaciones aparecerán aquí cuando tu docente las publique.</small></div></div>`;
+                return;
+            }
+            
+            container.innerHTML = `<div class="table-container"><h5><i class="fas fa-star me-2"></i>Mis Evaluaciones</h5><p class="text-muted small mb-3">Evaluaciones realizadas por: <strong>${docenteNombre}</strong></p><hr><div class="table-responsive"><table class="table table-striped"><thead><tr><th>ID</th><th>Tipo</th><th>Puntaje</th><th>Fecha</th><th>Comentarios</th><th>Acciones</th></tr></thead><tbody>${evaluations.map(e => `<tr><td>${e.id}</td><td>${e.evaluation_type || 'desempeño'}</td><td><span class="${e.score >= 4 ? 'badge-high' : e.score >= 3 ? 'badge-medium' : 'badge-low'}">${e.score || '-'}</span></td><td>${e.evaluation_date || e.date?.split('T')[0] || '-'}</td><td>${e.comments || '-'}</td><td><button class="btn-report" onclick="abrirReporte(${e.id}, '${e.evaluation_type || 'Evaluación'}', ${e.score || 0})"><i class="fas fa-flag"></i> Reportar</button></td></tr>`).join('')}</tbody>}80</div></div>`;
+        }
+
+        async function loadOfertas(container) {
+            try {
+                const offers = await OfferService.getAll();
+                const ofertas = offers.result || [];
+                let applications = [];
+                try {
+                    const appRes = await ApplicationService.getAll();
+                    applications = (appRes.result || []).filter(a => a.student_id === currentStudentId);
+                } catch(e) {
+                    applications = JSON.parse(localStorage.getItem('internsys_applications') || '[]');
+                    applications = applications.filter(a => a.student_id === currentStudentId);
+                }
+                
+                const appliedMap = {};
+                applications.forEach(app => { appliedMap[app.offer_id] = { status: app.status, application_id: app.id }; });
+                
+                function getStatusBadge(status) {
+                    switch(status) {
+                        case 'aceptada': return '<span class="badge bg-success">✓ Aceptada</span>';
+                        case 'denegada': return '<span class="badge bg-danger">✗ Denegada</span>';
+                        default: return '<span class="badge bg-warning text-dark">⏳ Pendiente</span>';
+                    }
+                }
+                
+                container.innerHTML = `<div class="table-container"><h5><i class="fas fa-briefcase me-2"></i>Ofertas Disponibles</h5><hr><div class="table-responsive"><table class="table table-striped"><thead><tr><th>ID</th><th>Título</th><th>Empresa</th><th>Ubicación</th><th>Tipo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${ofertas.map(o => {
+                    const applied = appliedMap[o.id];
+                    const isPostulado = !!applied;
+                    const statusBadge = isPostulado ? getStatusBadge(applied.status) : '<span class="badge bg-secondary">No postulado</span>';
+                    const buttonDisabled = isPostulado ? 'disabled' : '';
+                    const buttonText = isPostulado ? (applied.status === 'aceptada' ? 'Aceptada' : applied.status === 'denegada' ? 'Denegada' : 'Postulado') : 'Postular';
+                    const buttonClass = isPostulado ? 'btn-secondary' : 'btn-apply';
+                    return `<tr><td>${o.id}</td><td>${o.title || o.titulo}</td><td>${o.company_name || o.empresa}</td><td>${o.location || o.ubicacion}</td><td>${o.type || o.tipo}</td><td>${statusBadge}</td><td><button class="${buttonClass}" onclick="postularOferta(${o.id})" ${buttonDisabled}>${buttonText}</button></td></tr>`;
+                }).join('')}${ofertas.length === 0 ? '<tr><td colspan="7" class="text-center">No hay ofertas disponibles</td></tr>' : ''}</tbody></table></div></div>`;
+            } catch(e) { container.innerHTML = '<div class="alert alert-danger">Error cargando ofertas</div>'; }
+        }
+
+        let currentReportEvalId = null;
+        function abrirReporte(evalId, evalType, score) {
+            currentReportEvalId = evalId;
+            document.getElementById('reporte_evaluation_id').value = evalId;
+            document.getElementById('reporte_evaluation_info').value = `${evalType} (ID: ${evalId})`;
+            document.getElementById('reporte_current_score').value = score;
+            document.getElementById('reporte_motivo').value = '';
+            document.getElementById('reporte_descripcion').value = '';
+            new bootstrap.Modal(document.getElementById('reportarModal')).show();
+        }
         
-        async function refreshData() { await loadDashboard(); showAlert('Datos actualizados', 'success'); }
-        document.getElementById('toggleSidebar').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('closed'); document.getElementById('mainContent').classList.toggle('expanded'); });
-        document.addEventListener('DOMContentLoaded', () => { loadDashboard(); setInterval(loadDashboard, 30000); });
+        async function enviarReporte() {
+            const motivo = document.getElementById('reporte_motivo').value;
+            const descripcion = document.getElementById('reporte_descripcion').value;
+            if (!motivo || !descripcion) { showAlert('Complete todos los campos', 'error'); return; }
+            const reporte = { evaluation_id: currentReportEvalId, student_id: currentStudentId, tutor_id: currentTutorId, motivo, descripcion, fecha: new Date().toISOString(), estado: 'pendiente' };
+            let reports = JSON.parse(localStorage.getItem('internsys_reports') || '[]');
+            reports.push(reporte);
+            localStorage.setItem('internsys_reports', JSON.stringify(reports));
+            bootstrap.Modal.getInstance(document.getElementById('reportarModal')).hide();
+            showAlert('Reporte enviado correctamente. El administrador lo revisará.', 'success');
+        }
+
+        document.getElementById('toggleSidebar').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('closed');
+            document.getElementById('mainContent').classList.toggle('expanded');
+        });
+        
+        document.addEventListener('DOMContentLoaded', () => loadPage('dashboard'));
     </script>
 </body>
 </html>

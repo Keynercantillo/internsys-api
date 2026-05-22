@@ -17,7 +17,7 @@
         .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.2); }
         .sidebar-header h4 i { margin-right: 10px; }
         .sidebar-menu { list-style: none; padding: 0; margin-top: 20px; }
-        .sidebar-menu .menu-item { display: block; padding: 12px 20px; color: white; text-decoration: none; transition: 0.3s; border-radius: 0 25px 25px 0; margin-right: 10px; }
+        .sidebar-menu .menu-item { display: block; padding: 12px 20px; color: white; text-decoration: none; transition: 0.3s; border-radius: 0 25px 25px 0; margin-right: 10px; cursor: pointer; }
         .sidebar-menu .menu-item:hover, .sidebar-menu .menu-item.active { background: rgba(255,255,255,0.2); }
         .sidebar-menu .menu-item i { width: 25px; margin-right: 10px; }
         .main-content { margin-left: 260px; transition: 0.3s; min-height: 100vh; }
@@ -28,6 +28,7 @@
         .badge-pending { background: #f39c12; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; }
         .badge-approved { background: #27ae60; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; }
         .badge-rejected { background: #e74c3c; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; }
+        .status-select { padding: 4px 8px; border-radius: 6px; border: 1px solid #ddd; font-size: 12px; }
         @media (max-width: 768px) { .sidebar { margin-left: -260px; } .main-content { margin-left: 0; } }
     </style>
 </head>
@@ -38,12 +39,12 @@
             <small>Empresa</small>
         </div>
         <ul class="sidebar-menu">
-            <li><a href="dashboard-company.html" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-            <li><a href="company-offers.html" class="menu-item"><i class="fas fa-briefcase"></i> Mis Ofertas</a></li>
-            <li><a href="company-assignments.html" class="menu-item"><i class="fas fa-handshake"></i> Mis Asignaciones</a></li>
-            <li><a href="company-applications.html" class="menu-item active"><i class="fas fa-file-alt"></i> Postulaciones</a></li>
-            <li><a href="company-profile.html" class="menu-item"><i class="fas fa-building"></i> Mi Empresa</a></li>
-            <li><a href="my-profile.html" class="menu-item"><i class="fas fa-user"></i> Mi Perfil</a></li>
+            <li><a class="menu-item" onclick="window.location.href='dashboard-company.html'"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a class="menu-item" onclick="window.location.href='company-offers.html'"><i class="fas fa-briefcase"></i> Mis Ofertas</a></li>
+            <li><a class="menu-item" onclick="window.location.href='company-assignments.html'"><i class="fas fa-handshake"></i> Mis Asignaciones</a></li>
+            <li><a class="menu-item active" onclick="window.location.href='company-applications.html'"><i class="fas fa-file-alt"></i> Postulaciones</a></li>
+            <li><a class="menu-item" onclick="window.location.href='company-profile.html'"><i class="fas fa-building"></i> Mi Empresa</a></li>
+            <li><a class="menu-item" onclick="window.location.href='my-profile.html'"><i class="fas fa-user"></i> Mi Perfil</a></li>
         </ul>
     </div>
 
@@ -65,6 +66,46 @@
         </nav>
 
         <div class="container-fluid mt-4">
+            <!-- Tarjetas de estadísticas -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center shadow-sm">
+                        <div class="card-body">
+                            <i class="fas fa-file-alt fa-2x text-primary mb-2"></i>
+                            <h3 id="totalCount">0</h3>
+                            <p class="text-muted">Total Postulaciones</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center shadow-sm">
+                        <div class="card-body">
+                            <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                            <h3 id="pendienteCount">0</h3>
+                            <p class="text-muted">Pendientes</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center shadow-sm">
+                        <div class="card-body">
+                            <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                            <h3 id="aceptadaCount">0</h3>
+                            <p class="text-muted">Aceptadas</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center shadow-sm">
+                        <div class="card-body">
+                            <i class="fas fa-times-circle fa-2x text-danger mb-2"></i>
+                            <h3 id="denegadaCount">0</h3>
+                            <p class="text-muted">Denegadas</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="d-flex justify-content-end mb-3">
                 <button class="btn-refresh" onclick="refreshData()"><i class="fas fa-sync-alt"></i> Refrescar</button>
             </div>
@@ -75,7 +116,8 @@
                         <tr>
                             <th>ID</th>
                             <th>Estudiante</th>
-                            <th>Carrera</th>
+                            <th>Email</th>
+                            <th>Teléfono</th>
                             <th>Oferta</th>
                             <th>Fecha Postulación</th>
                             <th>Estado</th>
@@ -87,19 +129,19 @@
         </div>
     </div>
 
-    <!-- Modal para ver detalles -->
+    <!-- Modal para ver detalles y gestionar -->
     <div class="modal fade" id="applicationModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">Detalles de Postulación</h5>
+                <div class="modal-header" style="background: linear-gradient(135deg, #9b59b6, #8e44ad); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-file-alt me-2"></i>Detalles de Postulación</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="applicationDetails"></div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="button" class="btn btn-success" id="btnAprobar" onclick="updateStatus('aprobado')">Aprobar</button>
-                    <button type="button" class="btn btn-danger" id="btnRechazar" onclick="updateStatus('rechazado')">Rechazar</button>
+                    <button type="button" class="btn btn-success" id="btnAprobar" onclick="cambiarEstado('aceptada')"><i class="fas fa-check"></i> Aceptar</button>
+                    <button type="button" class="btn btn-danger" id="btnRechazar" onclick="cambiarEstado('denegada')"><i class="fas fa-times"></i> Denegar</button>
                 </div>
             </div>
         </div>
@@ -116,6 +158,7 @@
     <script>
         let applicationsTable;
         let currentApplicationId = null;
+        let currentApplicationStatus = null;
         
         function getCurrentUser() { 
             const user = localStorage.getItem('internsys_user'); 
@@ -137,6 +180,18 @@
             });
         }
         
+        async function cargarEstadisticas(companyId, applications) {
+            const total = applications.length;
+            const pendientes = applications.filter(a => a.status === 'pendiente').length;
+            const aceptadas = applications.filter(a => a.status === 'aceptada').length;
+            const denegadas = applications.filter(a => a.status === 'denegada').length;
+            
+            document.getElementById('totalCount').innerText = total;
+            document.getElementById('pendienteCount').innerText = pendientes;
+            document.getElementById('aceptadaCount').innerText = aceptadas;
+            document.getElementById('denegadaCount').innerText = denegadas;
+        }
+        
         async function initDataTable() {
             try {
                 const user = getCurrentUser();
@@ -147,39 +202,38 @@
                 
                 document.getElementById('userName').innerText = user.nombre || 'Empresa';
                 
-                if (!user.empresa_id) {
-                    console.error('Usuario empresa sin empresa_id:', user);
-                    $('#applicationsTable tbody').html('<tr><td colspan="7" class="text-center text-danger">No se encontró la empresa asociada a tu cuenta. Contacta al administrador.</td></table>');
+                const empresaId = user.empresa_id || user.company_id;
+                if (!empresaId) {
+                    $('#applicationsTable tbody').html('<tr><td colspan="8" class="text-center text-danger">No se encontró la empresa asociada. Contacta al administrador.</td></tr>');
                     return;
                 }
                 
-                console.log('Cargando postulaciones para empresa ID:', user.empresa_id);
-                
-                const response = await ApplicationService.getByCompany(user.empresa_id);
+                const response = await ApplicationService.getByCompany(empresaId);
                 const applications = response.result || [];
                 
-                console.log('Postulaciones recibidas:', applications);
+                await cargarEstadisticas(empresaId, applications);
                 
                 if (applications.length === 0) {
-                    $('#applicationsTable tbody').html('<tr><td colspan="7" class="text-center">No hay postulaciones recibidas aún</td></tr>');
+                    $('#applicationsTable tbody').html('<tr><td colspan="8" class="text-center">No hay postulaciones recibidas aún</td></tr>');
                     if (applicationsTable) applicationsTable.destroy();
                     return;
                 }
                 
                 const data = applications.map(a => {
                     let estadoBadge = '';
-                    if (a.status === 'pendiente') estadoBadge = '<span class="badge-pending">Pendiente</span>';
-                    else if (a.status === 'aprobado') estadoBadge = '<span class="badge-approved">Aprobado</span>';
-                    else estadoBadge = '<span class="badge-rejected">Rechazado</span>';
+                    if (a.status === 'pendiente') estadoBadge = '<span class="badge-pending">⏳ Pendiente</span>';
+                    else if (a.status === 'aceptada') estadoBadge = '<span class="badge-approved">✅ Aceptada</span>';
+                    else estadoBadge = '<span class="badge-rejected">❌ Denegada</span>';
                     
                     return [
                         a.id,
-                        a.student_nombre || 'No especificado',
-                        a.student_carrera || 'N/A',
+                        a.student_name || 'No especificado',
+                        a.student_email || '-',
+                        a.student_phone || '-',
                         a.offer_title || '-',
                         a.application_date,
                         estadoBadge,
-                        `<button class="btn btn-sm btn-info" onclick="viewApplication(${a.id})"><i class="fas fa-eye"></i> Ver Detalles</button>`
+                        `<button class="btn btn-sm btn-info" onclick="verDetalles(${a.id})"><i class="fas fa-eye"></i> Ver</button>`
                     ];
                 });
                 
@@ -190,7 +244,8 @@
                     columns: [
                         { title: "ID" },
                         { title: "Estudiante" },
-                        { title: "Carrera" },
+                        { title: "Email" },
+                        { title: "Teléfono" },
                         { title: "Oferta" },
                         { title: "Fecha" },
                         { title: "Estado" },
@@ -202,16 +257,16 @@
                 });
                 
             } catch (error) {
-                console.error('Error en initDataTable:', error);
-                $('#applicationsTable tbody').html(`<td><td colspan="7" class="text-center text-danger">Error al cargar: ${error.message}</td></tr>`);
-                showAlert('Error al cargar postulaciones', 'error');
+                console.error('Error:', error);
+                $('#applicationsTable tbody').html(`<tr><td colspan="8" class="text-center text-danger">Error al cargar: ${error.message}</td></tr>`);
             }
         }
         
-        async function viewApplication(id) {
+        async function verDetalles(id) {
             try {
                 const user = getCurrentUser();
-                const response = await ApplicationService.getByCompany(user.empresa_id);
+                const empresaId = user.empresa_id || user.company_id;
+                const response = await ApplicationService.getByCompany(empresaId);
                 const applications = response.result || [];
                 const app = applications.find(a => a.id === id);
                 
@@ -221,22 +276,24 @@
                 }
                 
                 currentApplicationId = id;
+                currentApplicationStatus = app.status;
                 
                 const html = `
                     <table class="table table-bordered">
-                        <tr><th width="35%">ID Postulación</th><td>${app.id}</td></tr>
-                        <tr><th>Estudiante</th><td>${app.student_nombre || 'N/A'}</td></tr>
+                        <tr><th width="35%">ID Postulación</th><td><strong>#${app.id}</strong></td></tr>
+                        <tr><th>Estudiante</th><td>${app.student_name || 'N/A'}</td></tr>
+                        <tr><th>Email</th><td>${app.student_email || 'N/A'}</td></tr>
+                        <tr><th>Teléfono</th><td>${app.student_phone || 'N/A'}</td></tr>
                         <tr><th>Carrera</th><td>${app.student_carrera || 'N/A'}</td></tr>
-                        <tr><th>Oferta</th><td>${app.offer_title || 'N/A'}</td></tr>
+                        <tr><th>Oferta</th><td><strong>${app.offer_title || 'N/A'}</strong><br><small>${app.offer_description || ''}</small></td></tr>
                         <tr><th>Fecha Postulación</th><td>${app.application_date}</td></tr>
-                        <tr><th>Estado Actual</th><td>${app.status === 'pendiente' ? 'Pendiente' : app.status === 'aprobado' ? 'Aprobado' : 'Rechazado'}</td></tr>
+                        <tr><th>Estado Actual</th><td>${app.status === 'pendiente' ? '<span class="badge-pending">Pendiente</span>' : app.status === 'aceptada' ? '<span class="badge-approved">Aceptada</span>' : '<span class="badge-rejected">Denegada</span>'}</td></tr>
                         <tr><th>Comentarios</th><td>${app.comments || 'Sin comentarios'}</td></tr>
                     </table>
                 `;
                 
                 document.getElementById('applicationDetails').innerHTML = html;
                 
-                // Mostrar/ocultar botones según estado
                 const btnAprobar = document.getElementById('btnAprobar');
                 const btnRechazar = document.getElementById('btnRechazar');
                 
@@ -255,15 +312,26 @@
             }
         }
         
-        async function updateStatus(status) {
-            try {
-                await ApplicationService.updateStatus(currentApplicationId, status);
-                showAlert(`Postulación ${status === 'aprobado' ? 'aprobada' : 'rechazada'} correctamente`, 'success');
-                bootstrap.Modal.getInstance(document.getElementById('applicationModal')).hide();
-                refreshData();
-            } catch (error) {
-                console.error('Error:', error);
-                showAlert('Error al actualizar estado', 'error');
+        async function cambiarEstado(status) {
+            const confirm = await Swal.fire({
+                title: `¿${status === 'aceptada' ? 'Aceptar' : 'Denegar'} postulación?`,
+                text: `Esta acción cambiará el estado de la postulación a ${status === 'aceptada' ? 'ACEPTADA' : 'DENEGADA'}`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: status === 'aceptada' ? '#27ae60' : '#e74c3c',
+                confirmButtonText: 'Sí, confirmar'
+            });
+            
+            if (confirm.isConfirmed) {
+                try {
+                    await ApplicationService.updateStatus(currentApplicationId, status);
+                    showAlert(`Postulación ${status === 'aceptada' ? 'aceptada' : 'denegada'} correctamente`, 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('applicationModal')).hide();
+                    refreshData();
+                } catch (error) {
+                    console.error('Error:', error);
+                    showAlert('Error al actualizar estado', 'error');
+                }
             }
         }
         

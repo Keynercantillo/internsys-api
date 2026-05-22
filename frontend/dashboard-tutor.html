@@ -5,107 +5,287 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InternSys - Dashboard Tutor</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/styles.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="components/main-components.js" type="module"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/services/api.js"></script>
+    <script src="js/auth.js"></script>
+    
     <style>
         body { background: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .sidebar { position: fixed; top: 0; left: 0; width: 260px; height: 100%; background: #1e2a3a; color: white; transition: 0.3s; z-index: 1000; }
-        .sidebar.closed { margin-left: -260px; }
+        .sidebar { position: fixed; top: 0; left: 0; width: 260px; height: 100%; background: #1e2a3a; color: white; z-index: 1000; overflow-y: auto; }
         .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #2c3e50; }
         .sidebar-header h4 i { margin-right: 10px; color: #f39c12; }
         .sidebar-menu { list-style: none; padding: 0; margin-top: 20px; }
-        .sidebar-menu .menu-item { display: block; padding: 12px 20px; color: #ecf0f1; text-decoration: none; transition: 0.3s; }
+        .sidebar-menu .menu-item { display: block; padding: 12px 20px; color: #ecf0f1; text-decoration: none; transition: 0.3s; cursor: pointer; }
         .sidebar-menu .menu-item:hover, .sidebar-menu .menu-item.active { background: #f39c12; color: white; }
         .sidebar-menu .menu-item i { width: 25px; margin-right: 10px; }
-        .main-content { margin-left: 260px; transition: 0.3s; min-height: 100vh; }
-        .main-content.expanded { margin-left: 0; }
+        .main-content { margin-left: 260px; min-height: 100vh; }
         .navbar { padding: 0.75rem 1.5rem; background: #f39c12; color: white; }
-        .welcome-banner { background: linear-gradient(135deg, #f39c12, #e67e22); border-radius: 15px; padding: 30px; color: white; margin-bottom: 30px; }
-        .stat-card { background: white; border-radius: 15px; padding: 20px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.08); transition: transform 0.3s; cursor: pointer; }
-        .stat-card:hover { transform: translateY(-5px); }
-        .stat-card i { font-size: 48px; margin-bottom: 15px; }
-        .stat-card .number { font-size: 32px; font-weight: bold; margin: 10px 0; }
         .table-container { background: white; border-radius: 10px; padding: 20px; margin-top: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
-        @media (max-width: 768px) { .sidebar { margin-left: -260px; } .main-content { margin-left: 0; } }
+        .btn-evaluate { background: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        .btn-view { background: #3498db; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        .modal-content { border-radius: 15px; }
+        .progress { height: 20px; }
+        @media (max-width: 768px) { .sidebar { width: 70px; } .main-content { margin-left: 70px; } }
     </style>
 </head>
 <body>
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header"><h4><i class="fas fa-graduation-cap"></i> InternSys</h4><small id="roleLabel">Tutor</small></div>
-        <ul class="sidebar-menu" id="sidebarMenu"></ul>
+    <div class="sidebar">
+        <div class="sidebar-header"><h4><i class="fas fa-graduation-cap"></i> InternSys</h4><small>Tutor</small></div>
+        <ul class="sidebar-menu">
+            <li><a class="menu-item" onclick="loadPage('dashboard')"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a class="menu-item" onclick="loadPage('estudiantes')"><i class="fas fa-users"></i> Mis Estudiantes</a></li>
+            <li><a class="menu-item" onclick="loadPage('evaluaciones')"><i class="fas fa-star"></i> Mis Evaluaciones</a></li>
+            <li><a class="menu-item" onclick="loadPage('perfil')"><i class="fas fa-user"></i> Mi Perfil</a></li>
+        </ul>
     </div>
 
-    <div class="main-content" id="mainContent">
+    <div class="main-content">
         <nav class="navbar">
             <div class="container-fluid">
-                <button class="btn btn-light" id="toggleSidebar"><i class="fas fa-bars"></i></button>
-                <span class="navbar-brand mb-0 h4">Panel del Tutor</span>
+                <span class="navbar-brand mb-0 h4" id="pageTitle">Panel del Tutor</span>
                 <div class="dropdown">
                     <button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-user"></i> <span id="userName">Tutor</span></button>
-                    <ul class="dropdown-menu"><li><a class="dropdown-item" href="my-profile.html">Mi Perfil</a></li><li><hr class="dropdown-divider"></li><li><a class="dropdown-item text-danger" href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li></ul>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="loadPage('perfil')">Mi Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li>
+                    </ul>
                 </div>
             </div>
         </nav>
+        <div class="container-fluid mt-4" id="dynamicContent"><div class="text-center p-5">Cargando...</div></div>
+    </div>
 
-        <div class="container-fluid mt-4">
-            <div class="welcome-banner">
-                <div class="row align-items-center">
-                    <div class="col-md-8"><h2><i class="fas fa-chalkboard-user me-2"></i>Bienvenido, <span id="tutorName">Tutor</span></h2><p>Gestiona tus estudiantes, evaluaciones y visitas de seguimiento.</p></div>
-                    <div class="col-md-4 text-end"><custom-button variant="primary" onclick="refreshData()"><i class="fas fa-sync-alt"></i> Refrescar</custom-button></div>
+    <!-- Modal para Evaluar Estudiante -->
+    <div class="modal fade" id="evaluarModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Evaluar Estudiante</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="evaluacionForm">
+                        <input type="hidden" id="student_id">
+                        <input type="hidden" id="assignment_id">
+                        <div class="mb-3">
+                            <label class="form-label">Estudiante</label>
+                            <input type="text" class="form-control" id="student_name" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de Evaluación</label>
+                            <select class="form-control" id="evaluation_type" required>
+                                <option value="desempeño">Evaluación de Desempeño</option>
+                                <option value="seguimiento">Evaluación de Seguimiento</option>
+                                <option value="final">Evaluación Final</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Puntaje (0-5)</label>
+                            <input type="number" step="0.1" min="0" max="5" class="form-control" id="score" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Fecha</label>
+                            <input type="date" class="form-control" id="evaluation_date" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Comentarios</label>
+                            <textarea class="form-control" id="comments" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" onclick="guardarEvaluacion()">Guardar Evaluación</button>
                 </div>
             </div>
-
-            <div class="row mb-4">
-                <div class="col-md-4 mb-3"><div class="stat-card" onclick="window.location.href='my-students.html'"><i class="fas fa-user-graduate text-primary"></i><div class="number" id="myStudentsCount">0</div><p>Mis Estudiantes</p></div></div>
-                <div class="col-md-4 mb-3"><div class="stat-card" onclick="window.location.href='evaluations.html'"><i class="fas fa-star text-warning"></i><div class="number" id="pendingEvaluations">0</div><p>Evaluaciones Pendientes</p></div></div>
-                <div class="col-md-4 mb-3"><div class="stat-card" onclick="window.location.href='followup.html'"><i class="fas fa-calendar-check text-info"></i><div class="number" id="pendingVisits">0</div><p>Visitas Pendientes</p></div></div>
-            </div>
-
-            <div class="table-container"><h5><i class="fas fa-users me-2"></i>Mis Estudiantes Asignados</h5><hr><div class="table-responsive"><table id="studentsTable" class="table table-striped"><thead><tr><th>ID</th><th>Nombre</th><th>Carrera</th><th>Semestre</th><th>Progreso</th><th>Acciones</th></tr></thead><tbody id="studentsTableBody"></tbody></table></div></div>
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="js/services/api.js"></script>
     <script>
-        function getCurrentUser() { const user = localStorage.getItem('internsys_user'); return user ? JSON.parse(user) : null; }
-        function cerrarSesion() { localStorage.removeItem('internsys_user'); window.location.href = 'index.html'; }
-        function showAlert(msg, type) { if(window.showAlert) window.showAlert(msg, type); else alert(msg); }
+        let currentTutorId = null;
         
-        function loadSidebarMenu() {
-            const user = getCurrentUser();
-            const menu = document.getElementById('sidebarMenu');
-            const roleLabel = document.getElementById('roleLabel');
-            if(!user) return;
-            roleLabel.innerText = user.rol === 'docente' ? 'Docente' : 'Tutor';
-            menu.innerHTML = `<li><a href="dashboard-tutor.html" class="menu-item active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li><li><a href="my-students.html" class="menu-item"><i class="fas fa-users"></i> Mis Estudiantes</a></li><li><a href="evaluations.html" class="menu-item"><i class="fas fa-star"></i> Evaluaciones</a></li><li><a href="followup.html" class="menu-item"><i class="fas fa-calendar-check"></i> Visitas</a></li><li><a href="my-profile.html" class="menu-item"><i class="fas fa-user"></i> Mi Perfil</a></li>`;
+        function getCurrentUser() {
+            const user = localStorage.getItem('internsys_user');
+            return user ? JSON.parse(user) : null;
         }
         
-        async function loadDashboard() {
+        function cerrarSesion() {
+            localStorage.removeItem('internsys_user');
+            window.location.href = 'index.html';
+        }
+        
+        function showAlert(msg, type) {
+            Swal.fire({ title: type === 'success' ? 'Éxito' : 'Error', text: msg, icon: type, confirmButtonColor: '#f39c12' });
+        }
+        
+        async function loadPage(page) {
             const user = getCurrentUser();
-            if(!user) return;
-            document.getElementById('tutorName').innerText = `${user.nombre} ${user.apellido}`;
+            if (!user || (user.rol !== 'tutor' && user.rol !== 'docente')) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            currentTutorId = user.id;
             document.getElementById('userName').innerText = user.nombre;
+            const contentDiv = document.getElementById('dynamicContent');
+            const pageTitle = document.getElementById('pageTitle');
             
-            const students = await StudentService.getAll();
-            const assignments = await AssignmentService.getAll();
-            const myStudentsIds = (assignments.result || []).filter(a => a.tutor_id === user.id).map(a => a.student_id);
-            const myStudents = (students.result || []).filter(s => myStudentsIds.includes(s.id));
-            document.getElementById('myStudentsCount').innerText = myStudents.length;
-            
-            const tbody = document.getElementById('studentsTableBody');
-            if(tbody) tbody.innerHTML = myStudents.map(s => `<tr><td>${s.id}</td><td>${s.nombre} ${s.apellido}</td><td>${s.carrera}</td><td>${s.semester}</td><td><div class="progress"><div class="progress-bar bg-success" style="width: ${s.progreso || 0}%">${s.progreso || 0}%</div></div></td><td><custom-button variant="info" size="sm" onclick="viewStudent(${s.id})">Ver</custom-button> <custom-button variant="primary" size="sm" onclick="evaluateStudent(${s.id})">Evaluar</custom-button></td></tr>`).join('');
+            if (page === 'dashboard') {
+                pageTitle.innerText = 'Panel del Tutor';
+                await loadDashboard(contentDiv, user);
+            } else if (page === 'estudiantes') {
+                pageTitle.innerText = 'Mis Estudiantes';
+                await loadStudents(contentDiv, user);
+            } else if (page === 'evaluaciones') {
+                pageTitle.innerText = 'Mis Evaluaciones';
+                await loadEvaluations(contentDiv, user);
+            } else if (page === 'perfil') {
+                pageTitle.innerText = 'Mi Perfil';
+                await loadProfile(contentDiv, user);
+            }
         }
         
-        async function refreshData() { await loadDashboard(); showAlert('Datos actualizados', 'success'); }
-        function viewStudent(id) { showAlert('Información del estudiante', 'info'); }
-        function evaluateStudent(id) { showAlert('Funcionalidad de evaluación en desarrollo', 'info'); }
+        async function loadDashboard(container, user) {
+            try {
+                const assignments = await AssignmentService.getAll();
+                const myAssignments = (assignments.result || []).filter(a => a.tutor_id === user.id);
+                const studentIds = myAssignments.map(a => a.student_id);
+                const students = await StudentService.getAll();
+                const myStudents = (students.result || []).filter(s => studentIds.includes(s.id));
+                
+                container.innerHTML = `
+                    <div class="row mb-4"><div class="col-12"><div class="table-container"><h5>Mis Estudiantes Asignados</h5><hr>
+                    <table class="table table-striped" id="studentsTable">
+                        <thead><tr><th>ID</th><th>Nombre</th><th>Carrera</th><th>Semestre</th><th>Acciones</th></tr></thead>
+                        <tbody>${myStudents.map(s => `
+                            <tr>
+                                <td>${s.id}</td>
+                                <td>${s.nombre} ${s.apellido || ''}</td>
+                                <td>${s.carrera || '-'}</td>
+                                <td>${s.semester || '-'}</td>
+                                <td><button class="btn-evaluate" onclick="abrirModalEvaluar(${s.id}, '${s.nombre} ${s.apellido || ''}', ${myAssignments.find(a => a.student_id === s.id)?.id || 0})"><i class="fas fa-star"></i> Evaluar</button></td>
+                            </tr>
+                        `).join('')}</tbody>
+                    </table></div></div></div>
+                `;
+            } catch(e) { container.innerHTML = '<div class="alert alert-danger">Error cargando datos</div>'; }
+        }
         
-        document.getElementById('toggleSidebar').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('closed'); document.getElementById('mainContent').classList.toggle('expanded'); });
-        document.addEventListener('DOMContentLoaded', () => { loadSidebarMenu(); loadDashboard(); setInterval(loadDashboard, 30000); });
+        async function loadStudents(container, user) {
+            try {
+                const assignments = await AssignmentService.getAll();
+                const myAssignments = (assignments.result || []).filter(a => a.tutor_id === user.id);
+                const studentIds = myAssignments.map(a => a.student_id);
+                const students = await StudentService.getAll();
+                const myStudents = (students.result || []).filter(s => studentIds.includes(s.id));
+                
+                container.innerHTML = `
+                    <div class="table-container"><h5>Lista de Estudiantes Asignados</h5><hr>
+                    <table class="table table-striped" id="studentsListTable">
+                        <thead><tr><th>ID</th><th>Nombre</th><th>Cédula</th><th>Carrera</th><th>Semestre</th><th>Teléfono</th><th>Email</th><th>Acciones</th></tr></thead>
+                        <tbody>${myStudents.map(s => `
+                            <tr>
+                                <td>${s.id}</td>
+                                <td>${s.nombre} ${s.apellido || ''}</td>
+                                <td>${s.cedula || '-'}</td>
+                                <td>${s.carrera || '-'}</td>
+                                <td>${s.semester || '-'}</td>
+                                <td>${s.telefono || '-'}</td>
+                                <td>${s.email || '-'}</td>
+                                <td><button class="btn-evaluate" onclick="abrirModalEvaluar(${s.id}, '${s.nombre} ${s.apellido || ''}', ${myAssignments.find(a => a.student_id === s.id)?.id || 0})"><i class="fas fa-star"></i> Evaluar</button></td>
+                            </tr>
+                        `).join('')}</tbody>
+                    </table></div>
+                `;
+            } catch(e) { container.innerHTML = '<div class="alert alert-danger">Error</div>'; }
+        }
+        
+        async function loadEvaluations(container, user) {
+            try {
+                const response = await fetch(`/api/get_evaluations_by_tutor/${user.id}`);
+                const data = await response.json();
+                const evaluations = data.result || [];
+                
+                container.innerHTML = `
+                    <div class="table-container"><h5>Evaluaciones Realizadas</h5><hr>
+                    <table class="table table-striped" id="evaluationsTable">
+                        <thead><tr><th>ID</th><th>Estudiante</th><th>Tipo</th><th>Puntaje</th><th>Fecha</th><th>Comentarios</th><th>Estado</th></tr></thead>
+                        <tbody>${evaluations.map(e => `
+                            <tr>
+                                <td>${e.id}</td>
+                                <td>${e.student_name || `ID: ${e.student_id}`}</td>
+                                <td>${e.evaluation_type}</td>
+                                <td><span class="badge bg-${e.score >= 4 ? 'success' : e.score >= 3 ? 'warning' : 'danger'}">${e.score || '-'}</span></td>
+                                <td>${e.evaluation_date}</td>
+                                <td>${e.comments || '-'}</td>
+                                <td><span class="badge bg-${e.status === 'completed' ? 'success' : 'warning'}">${e.status === 'completed' ? 'Completada' : 'Pendiente'}</span></td>
+                            </tr>
+                        `).join('')}</tbody>
+                    </table></div>
+                `;
+            } catch(e) { container.innerHTML = '<div class="alert alert-danger">Error cargando evaluaciones</div>'; }
+        }
+        
+        async function loadProfile(container, user) {
+            container.innerHTML = `<div class="table-container"><h5>Mi Perfil</h5><hr><p><strong>Nombre:</strong> ${user.nombre} ${user.apellido || ''}</p><p><strong>Email:</strong> ${user.email || '-'}</p><p><strong>Teléfono:</strong> ${user.telefono || '-'}</p></div>`;
+        }
+        
+        let modalStudentId = null;
+        let modalAssignmentId = null;
+        
+        function abrirModalEvaluar(studentId, studentName, assignmentId) {
+            modalStudentId = studentId;
+            modalAssignmentId = assignmentId;
+            document.getElementById('student_name').value = studentName;
+            document.getElementById('student_id').value = studentId;
+            document.getElementById('assignment_id').value = assignmentId;
+            document.getElementById('evaluation_date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('score').value = '';
+            document.getElementById('comments').value = '';
+            document.getElementById('evaluation_type').value = 'desempeño';
+            new bootstrap.Modal(document.getElementById('evaluarModal')).show();
+        }
+        
+        async function guardarEvaluacion() {
+            const evaluation = {
+                internship_assignment_id: modalAssignmentId,
+                evaluator_id: currentTutorId,
+                evaluation_type: document.getElementById('evaluation_type').value,
+                score: parseFloat(document.getElementById('score').value),
+                comments: document.getElementById('comments').value,
+                evaluation_date: document.getElementById('evaluation_date').value,
+                criteria_json: null
+            };
+            
+            if (!evaluation.score || evaluation.score < 0 || evaluation.score > 5) {
+                showAlert('Ingrese un puntaje válido entre 0 y 5', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/create_evaluation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(evaluation)
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showAlert('Evaluación guardada correctamente', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('evaluarModal')).hide();
+                    loadPage('dashboard');
+                } else {
+                    showAlert(data.detail || 'Error al guardar', 'error');
+                }
+            } catch(e) {
+                showAlert('Error de conexión', 'error');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => { loadPage('dashboard'); });
     </script>
 </body>
 </html>

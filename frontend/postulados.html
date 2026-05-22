@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InternSys - Ofertas</title>
+    <title>InternSys - Postulaciones</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="css/styles.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    
+    <!-- SweetAlert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <!-- Importar componentes web -->
     <script src="components/main-components.js" type="module"></script>
@@ -32,34 +35,45 @@
         .navbar { padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #27ae60, #229954); color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .navbar .btn-light { background: white; border: none; border-radius: 8px; padding: 8px 12px; }
         
+        /* Tarjetas de estadísticas */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .stat-card { background: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .stat-card .stat-number { font-size: 32px; font-weight: 700; color: #27ae60; }
+        .stat-card .stat-label { font-size: 14px; color: #7f8c8d; margin-top: 5px; }
+        .stat-card i { font-size: 40px; color: #27ae60; margin-bottom: 10px; }
+        
         /* Tabla */
         .table-container { background: white; border-radius: 12px; padding: 20px; margin-top: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         .table-container h4 { margin: 0 0 20px 0; color: #2c3e50; font-weight: 600; border-left: 4px solid #27ae60; padding-left: 15px; }
         
         /* Botones */
-        .action-buttons { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; justify-content: space-between; align-items: center; }
-        .btn-add-custom { background: linear-gradient(135deg, #27ae60, #229954); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
-        .btn-add-custom:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(39,174,96,0.4); }
+        .action-buttons { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; justify-content: flex-end; }
         .btn-refresh-custom { background: linear-gradient(135deg, #3498db, #2980b9); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
         .btn-refresh-custom:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(52,152,219,0.4); }
         
-        /* Botones tabla */
-        .btn-edit-table { background: #f39c12; color: white; border: none; padding: 5px 12px; border-radius: 5px; font-size: 12px; margin-right: 5px; cursor: pointer; transition: all 0.2s; }
-        .btn-edit-table:hover { background: #e67e22; transform: translateY(-1px); }
-        .btn-delete-table { background: #e74c3c; color: white; border: none; padding: 5px 12px; border-radius: 5px; font-size: 12px; cursor: pointer; transition: all 0.2s; }
-        .btn-delete-table:hover { background: #c0392b; transform: translateY(-1px); }
-        .btn-view-table { background: #3498db; color: white; border: none; padding: 5px 12px; border-radius: 5px; font-size: 12px; cursor: pointer; transition: all 0.2s; }
-        .btn-view-table:hover { background: #2980b9; transform: translateY(-1px); }
+        /* Botones de acción en tabla */
+        .btn-accept { background: #27ae60; color: white; border: none; padding: 5px 12px; border-radius: 5px; font-size: 12px; margin-right: 5px; cursor: pointer; transition: all 0.2s; }
+        .btn-accept:hover { background: #229954; transform: translateY(-1px); }
+        .btn-reject { background: #e74c3c; color: white; border: none; padding: 5px 12px; border-radius: 5px; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+        .btn-reject:hover { background: #c0392b; transform: translateY(-1px); }
+        .btn-view-offer { background: #3498db; color: white; border: none; padding: 5px 12px; border-radius: 5px; font-size: 12px; margin-right: 5px; cursor: pointer; transition: all 0.2s; }
+        .btn-view-offer:hover { background: #2980b9; transform: translateY(-1px); }
         
-        .badge-disponible { background: #27ae60; color: white; padding: 4px 8px; border-radius: 20px; font-size: 11px; }
-        .badge-ocupado { background: #e74c3c; color: white; padding: 4px 8px; border-radius: 20px; font-size: 11px; }
+        /* Badges de estado */
+        .badge-pendiente { background: #f39c12; color: white; padding: 4px 8px; border-radius: 20px; font-size: 11px; }
+        .badge-aceptada { background: #27ae60; color: white; padding: 4px 8px; border-radius: 20px; font-size: 11px; }
+        .badge-rechazada { background: #e74c3c; color: white; padding: 4px 8px; border-radius: 20px; font-size: 11px; }
         
-        /* Modal de detalle */
+        /* Modal de detalle de oferta */
         .detail-card { background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
         .detail-card h6 { color: #27ae60; margin-bottom: 10px; }
         .detail-card p { margin: 0; color: #555; }
         
-        @media (max-width: 768px) { .sidebar { margin-left: -260px; } .main-content { margin-left: 0; } .action-buttons { flex-direction: column; } }
+        @media (max-width: 768px) { 
+            .sidebar { margin-left: -260px; } 
+            .main-content { margin-left: 0; } 
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -70,8 +84,8 @@
             <li><a href="students.html" class="menu-item"><i class="fas fa-user-graduate"></i> Estudiantes</a></li>
             <li><a href="companies.html" class="menu-item"><i class="fas fa-building"></i> Empresas</a></li>
             <li><a href="tutors.html" class="menu-item"><i class="fas fa-chalkboard-user"></i> Tutores</a></li>
-            <li><a href="offers.html" class="menu-item active"><i class="fas fa-briefcase"></i> Ofertas</a></li>
-            <li><a href="postulados.html" class="menu-item"><i class="fas fa-users"></i> Postulados</a></li>
+            <li><a href="offers.html" class="menu-item"><i class="fas fa-briefcase"></i> Ofertas</a></li>
+            <li><a href="postulados.html" class="menu-item active"><i class="fas fa-users"></i> Postulados</a></li>
             <li><a href="assignments.html" class="menu-item"><i class="fas fa-handshake"></i> Asignaciones</a></li>
             <li><a href="users.html" class="menu-item"><i class="fas fa-users"></i> Usuarios</a></li>
             <li><a href="reports.html" class="menu-item"><i class="fas fa-chart-line"></i> Reportes</a></li>
@@ -83,7 +97,7 @@
         <nav class="navbar">
             <div class="container-fluid">
                 <button class="btn btn-light" id="toggleSidebar"><i class="fas fa-bars"></i></button>
-                <span class="navbar-brand mb-0 h4">Gestión de Ofertas</span>
+                <span class="navbar-brand mb-0 h4">Gestión de Postulaciones</span>
                 <div class="dropdown">
                     <button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-user"></i> <span id="userName">Admin</span></button>
                     <ul class="dropdown-menu">
@@ -96,29 +110,51 @@
         </nav>
 
         <div class="container-fluid mt-4">
-            <!-- Botones de acción -->
+            <!-- Tarjetas de estadísticas -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <i class="fas fa-clock"></i>
+                    <div class="stat-number" id="totalPendientes">0</div>
+                    <div class="stat-label">Postulaciones Pendientes</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-check-circle"></i>
+                    <div class="stat-number" id="totalAceptadas">0</div>
+                    <div class="stat-label">Postulaciones Aceptadas</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-times-circle"></i>
+                    <div class="stat-number" id="totalRechazadas">0</div>
+                    <div class="stat-label">Postulaciones Rechazadas</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-users"></i>
+                    <div class="stat-number" id="totalPostulaciones">0</div>
+                    <div class="stat-label">Total Postulaciones</div>
+                </div>
+            </div>
+
+            <!-- Botón refrescar -->
             <div class="action-buttons">
-                <button class="btn-add-custom" onclick="showCreateModal()">
-                    <i class="fas fa-plus-circle"></i> Nueva Oferta
-                </button>
-                <button class="btn-refresh-custom" onclick="refreshData()">
+                <button class="btn-refresh-custom" onclick="cargarPostulaciones()">
                     <i class="fas fa-sync-alt"></i> Refrescar
                 </button>
             </div>
 
-            <!-- Tabla de Ofertas -->
+            <!-- Tabla de Postulaciones -->
             <div class="table-container">
-                <h4><i class="fas fa-briefcase me-2"></i>Lista de Ofertas</h4>
+                <h4><i class="fas fa-users me-2"></i>Lista de Postulaciones</h4>
                 <div class="table-responsive">
-                    <table id="offersTable" class="table table-striped table-bordered" style="width:100%">
+                    <table id="postulacionesTable" class="table table-striped table-bordered" style="width:100%">
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Título</th>
+                                <th>Estudiante</th>
+                                <th>Cédula</th>
+                                <th>Oferta</th>
                                 <th>Empresa</th>
-                                <th>Vacantes</th>
+                                <th>Fecha Postulación</th>
                                 <th>Estado</th>
-                                <th>Fecha Inicio</th>
                                 <th>Acciones</th>
                             </thead>
                         <tbody></tbody>
@@ -146,48 +182,15 @@
         </div>
     </div>
 
-    <!-- Modal para Crear/Editar Oferta -->
-    <div class="modal fade" id="offerModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="modalTitle">Nueva Oferta</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="offerForm">
-                        <input type="hidden" id="offerId">
-                        <div class="row">
-                            <div class="col-md-12"><div class="mb-3"><label>Título *</label><input type="text" class="form-control" id="title" required></div></div>
-                            <div class="col-md-12"><div class="mb-3"><label>Descripción</label><textarea class="form-control" id="description" rows="3"></textarea></div></div>
-                            <div class="col-md-6"><div class="mb-3"><label>Empresa *</label><select class="form-control" id="company_id" required></select></div></div>
-                            <div class="col-md-6"><div class="mb-3"><label>Vacantes *</label><input type="number" class="form-control" id="available_positions" required></div></div>
-                            <div class="col-md-6"><div class="mb-3"><label>Fecha Inicio</label><input type="date" class="form-control" id="start_date"></div></div>
-                            <div class="col-md-6"><div class="mb-3"><label>Fecha Fin</label><input type="date" class="form-control" id="end_date"></div></div>
-                            <div class="col-md-12"><div class="mb-3"><label>Habilidades Requeridas</label><textarea class="form-control" id="required_skills" rows="2"></textarea></div></div>
-                            <div class="col-md-12"><div class="mb-3"><label>Requisitos</label><textarea class="form-control" id="requirements" rows="2"></textarea></div></div>
-                            <div class="col-md-6"><div class="mb-3"><label>Estado</label><select class="form-control" id="status"><option value="disponible">Disponible</option><option value="ocupado">Ocupado</option></select></div></div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" onclick="saveOffer()">Guardar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="js/services/api.js"></script>
     <script src="js/auth.js"></script>
     
     <script>
-        let offersTable, currentEditId = null;
+        let postulacionesTable = null;
         
         function getCurrentUser() { 
             const user = localStorage.getItem('internsys_user'); 
@@ -197,10 +200,6 @@
         function cerrarSesion() { 
             localStorage.removeItem('internsys_user'); 
             window.location.href = 'index.html'; 
-        }
-        
-        function closeModal() { 
-            bootstrap.Modal.getInstance(document.getElementById('offerModal')).hide(); 
         }
         
         function showSuccessAlert(message) {
@@ -282,12 +281,6 @@
                                         <p>${oferta.requirements || 'No especificados'}</p>
                                     </div>
                                 </div>
-                                <div class="col-md-12">
-                                    <div class="detail-card">
-                                        <h6><i class="fas fa-tag"></i> Estado</h6>
-                                        <p>${oferta.status === 'disponible' ? '<span class="badge-disponible">Disponible</span>' : '<span class="badge-ocupado">Ocupado</span>'}</p>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -302,125 +295,156 @@
             }
         }
         
-        async function loadCompanies() {
-            const res = await CompanyService.getAll();
-            const select = document.getElementById('company_id');
-            select.innerHTML = '<option value="">Seleccione empresa...</option>';
-            (res.result || []).forEach(c => select.innerHTML += `<option value="${c.id}">${c.name}</option>`);
-        }
-        
-        async function initDataTable() {
-            const offers = (await OfferService.getAll()).result || [];
-            const companies = (await CompanyService.getAll()).result || [];
-            const companyMap = {}; 
-            companies.forEach(c => companyMap[c.id] = c.name);
-            
-            const data = offers.map(o => [
-                o.id,
-                o.title,
-                companyMap[o.company_id] || '-',
-                o.available_positions || 0,
-                o.status === 'disponible' ? '<span class="badge-disponible">Disponible</span>' : '<span class="badge-ocupado">Ocupado</span>',
-                o.start_date || '-',
-                `<div style="display: flex; gap: 5px;">
-                    <button class="btn-edit-table" onclick="editOffer(${o.id})"><i class="fas fa-edit"></i> Editar</button>
-                    <button class="btn-delete-table" onclick="deleteOffer(${o.id})"><i class="fas fa-trash"></i> Eliminar</button>
-                    <button class="btn-view-table" onclick="verDetalleOferta(${o.id})"><i class="fas fa-eye"></i> Ver</button>
-                </div>`
-            ]);
-            
-            if(offersTable) offersTable.destroy();
-            offersTable = $('#offersTable').DataTable({ 
-                data: data, 
-                columns: [
-                    { title: "ID" }, { title: "Título" }, { title: "Empresa" }, 
-                    { title: "Vacantes" }, { title: "Estado" }, { title: "Fecha Inicio" }, 
-                    { title: "Acciones", orderable: false }
-                ], 
-                language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' }, 
-                pageLength: 10,
-                order: [[0, 'desc']],
-                responsive: true
-            });
-        }
-        
-        async function refreshData() { 
-            await initDataTable(); 
-            showSuccessAlert('Datos actualizados correctamente'); 
-        }
-        
-        function showCreateModal() { 
-            currentEditId = null; 
-            document.getElementById('offerForm').reset(); 
-            document.getElementById('modalTitle').innerText = 'Nueva Oferta';
-            loadCompanies(); 
-            new bootstrap.Modal(document.getElementById('offerModal')).show(); 
-        }
-        
-        async function editOffer(id) { 
-            const o = await OfferService.getById(id); 
-            currentEditId = id; 
-            await loadCompanies(); 
-            document.getElementById('title').value = o.title; 
-            document.getElementById('description').value = o.description; 
-            document.getElementById('company_id').value = o.company_id; 
-            document.getElementById('available_positions').value = o.available_positions; 
-            document.getElementById('start_date').value = o.start_date; 
-            document.getElementById('end_date').value = o.end_date; 
-            document.getElementById('required_skills').value = o.required_skills; 
-            document.getElementById('requirements').value = o.requirements; 
-            document.getElementById('status').value = o.status; 
-            document.getElementById('modalTitle').innerText = 'Editar Oferta'; 
-            new bootstrap.Modal(document.getElementById('offerModal')).show(); 
-        }
-        
-        async function saveOffer() { 
-            const data = { 
-                title: document.getElementById('title').value,
-                description: document.getElementById('description').value,
-                company_id: parseInt(document.getElementById('company_id').value),
-                available_positions: parseInt(document.getElementById('available_positions').value),
-                start_date: document.getElementById('start_date').value || null,
-                end_date: document.getElementById('end_date').value || null,
-                required_skills: document.getElementById('required_skills').value,
-                requirements: document.getElementById('requirements').value,
-                status: document.getElementById('status').value
-            }; 
-            try { 
-                if(currentEditId) { 
-                    await OfferService.update(currentEditId, data); 
-                    showSuccessAlert('Oferta actualizada correctamente'); 
-                } else { 
-                    await OfferService.create(data); 
-                    showSuccessAlert('Oferta creada correctamente'); 
-                } 
-                closeModal(); 
-                refreshData(); 
-            } catch(e) { 
-                showErrorAlert('Error al guardar: ' + e.message); 
-            } 
-        }
-        
-        async function deleteOffer(id) { 
+        // ============================================
+        // ACEPTAR POSTULACIÓN
+        // ============================================
+        async function aceptarPostulacion(applicationId, offerTitle, studentName) {
             Swal.fire({
-                title: '¿Eliminar oferta?',
-                text: 'Esta acción no se puede deshacer',
-                icon: 'warning',
+                title: '¿Aceptar postulación?',
+                html: `¿Estás seguro de aceptar a <strong>${studentName}</strong> para la oferta <strong>${offerTitle}</strong>?`,
+                icon: 'question',
                 showCancelButton: true,
-                confirmButtonColor: '#e74c3c',
-                confirmButtonText: 'Sí, eliminar',
+                confirmButtonColor: '#27ae60',
+                confirmButtonText: 'Sí, aceptar',
                 cancelButtonText: 'Cancelar'
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    try { 
-                        await OfferService.delete(id); 
-                        showSuccessAlert('Oferta eliminada correctamente'); 
-                        refreshData(); 
-                    } catch(e) { 
-                        showErrorAlert('Error al eliminar: ' + e.message); 
+                    try {
+                        await ApplicationService.updateStatus(applicationId, 'aceptada');
+                        showSuccessAlert(`Postulación de ${studentName} aceptada correctamente`);
+                        cargarPostulaciones();
+                    } catch (error) {
+                        showErrorAlert('Error al aceptar: ' + error.message);
                     }
                 }
             });
+        }
+        
+        // ============================================
+        // RECHAZAR POSTULACIÓN
+        // ============================================
+        async function rechazarPostulacion(applicationId, offerTitle, studentName) {
+            Swal.fire({
+                title: '¿Rechazar postulación?',
+                html: `¿Estás seguro de rechazar a <strong>${studentName}</strong> para la oferta <strong>${offerTitle}</strong>?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e74c3c',
+                confirmButtonText: 'Sí, rechazar',
+                cancelButtonText: 'Cancelar'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        await ApplicationService.updateStatus(applicationId, 'rechazada');
+                        showSuccessAlert(`Postulación de ${studentName} rechazada`);
+                        cargarPostulaciones();
+                    } catch (error) {
+                        showErrorAlert('Error al rechazar: ' + error.message);
+                    }
+                }
+            });
+        }
+        
+        // ============================================
+        // CARGAR POSTULACIONES
+        // ============================================
+        async function cargarPostulaciones() {
+            try {
+                // Obtener todas las postulaciones
+                const appsResult = await ApplicationService.getAll();
+                const postulaciones = appsResult.result || [];
+                
+                // Obtener ofertas y empresas para mapear
+                const ofertas = (await OfferService.getAll()).result || [];
+                const empresas = (await CompanyService.getAll()).result || [];
+                
+                const ofertaMap = {};
+                ofertas.forEach(o => ofertaMap[o.id] = o.title);
+                
+                const empresaMap = {};
+                empresas.forEach(e => empresaMap[e.id] = e.name);
+                
+                // Calcular estadísticas
+                const pendientes = postulaciones.filter(p => p.status === 'pendiente').length;
+                const aceptadas = postulaciones.filter(p => p.status === 'aceptada').length;
+                const rechazadas = postulaciones.filter(p => p.status === 'rechazada').length;
+                
+                document.getElementById('totalPendientes').innerText = pendientes;
+                document.getElementById('totalAceptadas').innerText = aceptadas;
+                document.getElementById('totalRechazadas').innerText = rechazadas;
+                document.getElementById('totalPostulaciones').innerText = postulaciones.length;
+                
+                // Preparar datos para la tabla
+                const data = postulaciones.map(p => {
+                    let estadoBadge = '';
+                    let acciones = '';
+                    
+                    if (p.status === 'pendiente') {
+                        estadoBadge = '<span class="badge-pendiente">Pendiente</span>';
+                        acciones = `
+                            <button class="btn-accept" onclick="aceptarPostulacion(${p.id}, '${p.offer_title}', '${p.student_name}')">
+                                <i class="fas fa-check"></i> Aceptar
+                            </button>
+                            <button class="btn-reject" onclick="rechazarPostulacion(${p.id}, '${p.offer_title}', '${p.student_name}')">
+                                <i class="fas fa-times"></i> Rechazar
+                            </button>
+                            <button class="btn-view-offer" onclick="verDetalleOferta(${p.offer_id})">
+                                <i class="fas fa-eye"></i> Ver Oferta
+                            </button>
+                        `;
+                    } else if (p.status === 'aceptada') {
+                        estadoBadge = '<span class="badge-aceptada">Aceptada</span>';
+                        acciones = `
+                            <button class="btn-view-offer" onclick="verDetalleOferta(${p.offer_id})">
+                                <i class="fas fa-eye"></i> Ver Oferta
+                            </button>
+                            <span class="text-success ms-2"><i class="fas fa-check-circle"></i> Aceptada</span>
+                        `;
+                    } else if (p.status === 'rechazada') {
+                        estadoBadge = '<span class="badge-rechazada">Rechazada</span>';
+                        acciones = `
+                            <button class="btn-view-offer" onclick="verDetalleOferta(${p.offer_id})">
+                                <i class="fas fa-eye"></i> Ver Oferta
+                            </button>
+                            <span class="text-danger ms-2"><i class="fas fa-times-circle"></i> Rechazada</span>
+                        `;
+                    }
+                    
+                    return [
+                        p.id,
+                        p.student_name || 'No especificado',
+                        p.student_cedula || '-',
+                        p.offer_title || 'Sin título',
+                        p.empresa_name || '-',
+                        p.application_date || '-',
+                        estadoBadge,
+                        acciones
+                    ];
+                });
+                
+                if (postulacionesTable) postulacionesTable.destroy();
+                postulacionesTable = $('#postulacionesTable').DataTable({ 
+                    data: data, 
+                    columns: [
+                        { title: "ID" },
+                        { title: "Estudiante" },
+                        { title: "Cédula" },
+                        { title: "Oferta" },
+                        { title: "Empresa" },
+                        { title: "Fecha Postulación" },
+                        { title: "Estado" },
+                        { title: "Acciones", orderable: false }
+                    ], 
+                    language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' }, 
+                    pageLength: 10,
+                    order: [[0, 'desc']],
+                    responsive: true
+                });
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showErrorAlert('Error al cargar postulaciones: ' + error.message);
+            }
         }
         
         function loadUserInfo() { 
@@ -435,7 +459,7 @@
         
         document.addEventListener('DOMContentLoaded', () => { 
             loadUserInfo(); 
-            initDataTable(); 
+            cargarPostulaciones(); 
         });
     </script>
 </body>

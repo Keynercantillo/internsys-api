@@ -1,8 +1,500 @@
 <!DOCTYPE html>
-<html lang="es"><head><meta charset="UTF-8"><title>Evaluaciones</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><link rel="stylesheet" href="css/styles.css"></head>
-<body><div class="sidebar" id="sidebar"><div class="sidebar-header"><h4><i class="fas fa-graduation-cap"></i> InternSys</h4><small>Admin</small></div><ul class="sidebar-menu"><li><a href="dashboard-admin.html" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li><li><a href="evaluations.html" class="menu-item active"><i class="fas fa-star"></i> Evaluaciones</a></li></ul></div>
-<div class="main-content" id="mainContent"><nav class="navbar navbar-dark bg-primary"><div class="container-fluid"><button class="btn btn-light" id="toggleSidebar"><i class="fas fa-bars"></i></button><span class="navbar-brand mb-0 h4">Evaluaciones</span><button class="btn btn-light" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Salir</button></div></nav>
-<div class="container-fluid mt-4"><div class="card"><div class="card-header bg-primary text-white"><h5 class="mb-0">Lista de Evaluaciones</h5></div><div class="card-body"><div class="table-responsive"><table id="mainTable" class="table table-striped"><thead><tr><th>ID</th><th>Estudiante</th><th>Tipo</th><th>Puntaje</th><th>Fecha</th><th>Comentarios</th></tr></thead><tbody><tr><td colspan="6" class="text-center">Cargando...</td></tr></tbody></table></div></div></div></div></div>
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script><script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script><script src="js/services/api.js"></script><script src="js/components/alert.js"></script><script src="js/auth.js"></script>
-<script>let table; async function init(){ try{ const r=await EvaluationService.getAll(); const data=(r.result||[]).map(e=>[e.id, e.student_name||'-', e.evaluation_type, `<span class="badge bg-${e.score>=4?'success':e.score>=3?'warning':'danger'}">${e.score}</span>`, e.evaluation_date, e.comments||'-']); if(table) table.destroy(); table=$('#mainTable').DataTable({ data:data, language:{ url:'//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' } }); } catch(e){ $('#mainTable tbody').html('<tr><td colspan="6" class="text-center text-danger">Error</td></tr>'); } } document.getElementById('toggleSidebar').addEventListener('click',function(){ document.getElementById('sidebar').classList.toggle('closed'); document.getElementById('mainContent').classList.toggle('expanded'); }); document.addEventListener('DOMContentLoaded',init);</script>
-</body></html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InternSys - Evaluaciones</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <style>
+        body { background: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        /* Sidebar */
+        .sidebar { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 260px; 
+            height: 100%; 
+            background: #1e2a3a; 
+            color: white; 
+            z-index: 1000; 
+            overflow-y: auto; 
+            transition: 0.3s;
+        }
+        .sidebar.closed { margin-left: -260px; }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #2c3e50; }
+        .sidebar-header h4 i { margin-right: 10px; color: #3498db; }
+        .sidebar-menu { list-style: none; padding: 0; margin-top: 20px; }
+        .sidebar-menu .menu-item { display: block; padding: 12px 20px; color: #ecf0f1; text-decoration: none; transition: 0.3s; }
+        .sidebar-menu .menu-item:hover, .sidebar-menu .menu-item.active { background: #3498db; color: white; }
+        .sidebar-menu .menu-item i { width: 25px; margin-right: 10px; }
+        
+        /* Main Content */
+        .main-content { margin-left: 260px; transition: 0.3s; min-height: 100vh; }
+        .main-content.expanded { margin-left: 0; }
+        
+        /* Navbar */
+        .navbar { background: linear-gradient(135deg, #3498db, #2980b9); padding: 0.75rem 1.5rem; }
+        .navbar .btn-light { background: white; border: none; border-radius: 8px; padding: 8px 12px; }
+        
+        /* Cards */
+        .card { border: none; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
+        .card-header { border-radius: 15px 15px 0 0 !important; }
+        
+        .btn-action { padding: 5px 10px; margin: 0 2px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; }
+        .btn-edit { background: #3498db; color: white; }
+        .btn-delete { background: #e74c3c; color: white; }
+        .btn-view { background: #2ecc71; color: white; }
+        .btn-primary-custom { background: #3498db; color: white; border: none; padding: 8px 16px; border-radius: 5px; }
+        
+        .modal-content { border-radius: 15px; }
+        .form-label { font-weight: 500; margin-top: 10px; }
+        
+        @media (max-width: 768px) { 
+            .sidebar { margin-left: -260px; } 
+            .main-content { margin-left: 0; } 
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h4><i class="fas fa-graduation-cap"></i> InternSys</h4>
+            <small>Administrador</small>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="dashboard-admin.html" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="students.html" class="menu-item"><i class="fas fa-user-graduate"></i> Estudiantes</a></li>
+            <li><a href="companies.html" class="menu-item"><i class="fas fa-building"></i> Empresas</a></li>
+            <li><a href="tutors.html" class="menu-item"><i class="fas fa-chalkboard-user"></i> Tutores</a></li>
+            <li><a href="offers.html" class="menu-item"><i class="fas fa-briefcase"></i> Ofertas</a></li>
+            <li><a href="applications.html" class="menu-item"><i class="fas fa-file-signature"></i> Postulados</a></li>
+            <li><a href="assignments.html" class="menu-item"><i class="fas fa-handshake"></i> Asignaciones</a></li>
+            <li><a href="users.html" class="menu-item"><i class="fas fa-users"></i> Usuarios</a></li>
+            <li><a href="reports.html" class="menu-item"><i class="fas fa-chart-line"></i> Reportes</a></li>
+            <li><a href="evaluations.html" class="menu-item active"><i class="fas fa-star"></i> Evaluaciones</a></li>
+            <li><a href="my-profile.html" class="menu-item"><i class="fas fa-user"></i> Mi Perfil</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <nav class="navbar">
+            <div class="container-fluid">
+                <button class="btn btn-light" id="toggleSidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <span class="navbar-brand mb-0 h4 text-white">Evaluaciones</span>
+                <button class="btn btn-light" onclick="cerrarSesion()">
+                    <i class="fas fa-sign-out-alt"></i> Salir
+                </button>
+            </div>
+        </nav>
+
+        <div class="container-fluid mt-4">
+            <!-- Botón Agregar Evaluación -->
+            <div class="mb-3 text-end">
+                <button class="btn btn-primary-custom" onclick="abrirModalNuevaEvaluacion()">
+                    <i class="fas fa-plus"></i> Nueva Evaluación
+                </button>
+            </div>
+
+            <!-- Tabla de Evaluaciones -->
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-star me-2"></i>Lista de Evaluaciones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="mainTable" class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Estudiante</th>
+                                    <th>Tutor</th>
+                                    <th>Tipo</th>
+                                    <th>Puntaje</th>
+                                    <th>Fecha</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="8" class="text-center">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Crear/Editar Evaluación -->
+    <div class="modal fade" id="evaluacionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalTitle">Nueva Evaluación</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="evaluacionForm">
+                        <input type="hidden" id="evaluation_id">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Estudiante *</label>
+                            <select class="form-control" id="student_id" required>
+                                <option value="">Seleccionar Estudiante</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Tutor *</label>
+                            <select class="form-control" id="tutor_id" required>
+                                <option value="">Seleccionar Tutor</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de Evaluación</label>
+                            <select class="form-control" id="evaluation_type">
+                                <option value="desempeño">Evaluación de Desempeño</option>
+                                <option value="seguimiento">Evaluación de Seguimiento</option>
+                                <option value="final">Evaluación Final</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Puntaje (0-5) *</label>
+                            <input type="number" step="0.1" min="0" max="5" class="form-control" id="score" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Fecha *</label>
+                            <input type="date" class="form-control" id="evaluation_date" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Estado</label>
+                            <select class="form-control" id="status">
+                                <option value="completed">Completada</option>
+                                <option value="pending">Pendiente</option>
+                                <option value="cancelled">Cancelada</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Asignación (opcional)</label>
+                            <select class="form-control" id="assignment_id">
+                                <option value="">Seleccionar Asignación</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Comentarios</label>
+                            <textarea class="form-control" id="comments" rows="3" placeholder="Observaciones de la evaluación..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarEvaluacion()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/services/api.js"></script>
+    <script src="js/auth.js"></script>
+    
+    <script>
+        let table;
+        let modal;
+        
+        function getCurrentUser() {
+            const user = localStorage.getItem('internsys_user');
+            return user ? JSON.parse(user) : null;
+        }
+        
+        function cerrarSesion() {
+            localStorage.removeItem('internsys_user');
+            window.location.href = 'index.html';
+        }
+        
+        function showAlert(message, type = 'success') {
+            Swal.fire({
+                title: type === 'success' ? 'Éxito' : type === 'error' ? 'Error' : 'Información',
+                text: message,
+                icon: type,
+                confirmButtonColor: '#3498db',
+                timer: 2000,
+                timerProgressBar: true
+            });
+        }
+        
+        async function cargarSelects() {
+            try {
+                // Cargar estudiantes
+                const students = await StudentService.getAll();
+                const studentSelect = document.getElementById('student_id');
+                studentSelect.innerHTML = '<option value="">Seleccionar Estudiante</option>';
+                (students.result || []).forEach(s => {
+                    studentSelect.innerHTML += `<option value="${s.id}">${s.nombre} ${s.apellido || ''} - ${s.carrera || ''}</option>`;
+                });
+                
+                // Cargar tutores
+                const tutors = await TutorService.getAll();
+                const tutorSelect = document.getElementById('tutor_id');
+                tutorSelect.innerHTML = '<option value="">Seleccionar Tutor</option>';
+                (tutors.result || []).forEach(t => {
+                    tutorSelect.innerHTML += `<option value="${t.id}">${t.nombre} ${t.apellido || ''}</option>`;
+                });
+                
+                // Cargar asignaciones
+                const assignments = await AssignmentService.getAll();
+                const assignmentSelect = document.getElementById('assignment_id');
+                assignmentSelect.innerHTML = '<option value="">Seleccionar Asignación</option>';
+                (assignments.result || []).forEach(a => {
+                    assignmentSelect.innerHTML += `<option value="${a.id}">Asignación #${a.id} - Estudiante ID: ${a.student_id}</option>`;
+                });
+                
+            } catch(e) {
+                console.error('Error cargando selects:', e);
+            }
+        }
+        
+        async function init() {
+            try {
+                const user = getCurrentUser();
+                if (!user) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                
+                await cargarSelects();
+                
+                // Obtener evaluaciones
+                let evaluations = [];
+                try {
+                    const r = await EvaluationService.getAll();
+                    evaluations = r.result || r || [];
+                } catch(e) {
+                    console.log('API no disponible, usando localStorage');
+                    evaluations = JSON.parse(localStorage.getItem('internsys_evaluations') || '[]');
+                }
+                
+                // Obtener nombres de estudiantes y tutores para mostrar
+                const students = await StudentService.getAll();
+                const tutors = await TutorService.getAll();
+                const studentsMap = {};
+                const tutorsMap = {};
+                (students.result || []).forEach(s => studentsMap[s.id] = `${s.nombre} ${s.apellido || ''}`);
+                (tutors.result || []).forEach(t => tutorsMap[t.id] = `${t.nombre} ${t.apellido || ''}`);
+                
+                const data = evaluations.map(e => [
+                    e.id,
+                    studentsMap[e.student_id] || `Estudiante ID: ${e.student_id}`,
+                    tutorsMap[e.tutor_id] || `Tutor ID: ${e.tutor_id}`,
+                    e.evaluation_type || 'desempeño',
+                    `<span class="badge bg-${e.score >= 4 ? 'success' : e.score >= 3 ? 'warning' : 'danger'}">${e.score || '-'}</span>`,
+                    e.evaluation_date || e.date || '-',
+                    `<span class="badge bg-${e.status === 'completed' ? 'success' : e.status === 'pending' ? 'warning' : 'secondary'}">${e.status === 'completed' ? 'Completada' : e.status === 'pending' ? 'Pendiente' : 'Cancelada'}</span>`,
+                    `
+                        <button class="btn-action btn-edit" onclick="editarEvaluacion(${e.id})"><i class="fas fa-edit"></i></button>
+                        <button class="btn-action btn-delete" onclick="eliminarEvaluacion(${e.id})"><i class="fas fa-trash"></i></button>
+                        <button class="btn-action btn-view" onclick="verEvaluacion(${e.id})"><i class="fas fa-eye"></i></button>
+                    `
+                ]);
+                
+                if (table) table.destroy();
+                table = $('#mainTable').DataTable({
+                    data: data,
+                    language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' },
+                    pageLength: 10
+                });
+                
+                modal = new bootstrap.Modal(document.getElementById('evaluacionModal'));
+                
+            } catch(e) {
+                console.error('Error:', e);
+                $('#mainTable tbody').html('<tr><td colspan="8" class="text-center text-danger">Error al cargar datos</td></tr>');
+            }
+        }
+        
+        function abrirModalNuevaEvaluacion() {
+            document.getElementById('modalTitle').innerText = 'Nueva Evaluación';
+            document.getElementById('evaluacionForm').reset();
+            document.getElementById('evaluation_id').value = '';
+            document.getElementById('evaluation_date').value = new Date().toISOString().split('T')[0];
+            modal.show();
+        }
+        
+        async function editarEvaluacion(id) {
+            try {
+                let evaluations = [];
+                try {
+                    const r = await EvaluationService.getAll();
+                    evaluations = r.result || r || [];
+                } catch(e) {
+                    evaluations = JSON.parse(localStorage.getItem('internsys_evaluations') || '[]');
+                }
+                
+                const evaluation = evaluations.find(e => e.id == id);
+                if (evaluation) {
+                    document.getElementById('modalTitle').innerText = 'Editar Evaluación';
+                    document.getElementById('evaluation_id').value = evaluation.id;
+                    document.getElementById('student_id').value = evaluation.student_id;
+                    document.getElementById('tutor_id').value = evaluation.tutor_id;
+                    document.getElementById('evaluation_type').value = evaluation.evaluation_type || 'desempeño';
+                    document.getElementById('score').value = evaluation.score;
+                    document.getElementById('evaluation_date').value = evaluation.evaluation_date;
+                    document.getElementById('status').value = evaluation.status || 'completed';
+                    document.getElementById('assignment_id').value = evaluation.assignment_id || '';
+                    document.getElementById('comments').value = evaluation.comments || '';
+                    modal.show();
+                }
+            } catch(e) {
+                showAlert('Error al cargar evaluación', 'error');
+            }
+        }
+        
+        async function verEvaluacion(id) {
+            try {
+                let evaluations = [];
+                try {
+                    const r = await EvaluationService.getAll();
+                    evaluations = r.result || r || [];
+                } catch(e) {
+                    evaluations = JSON.parse(localStorage.getItem('internsys_evaluations') || '[]');
+                }
+                
+                const evaluation = evaluations.find(e => e.id == id);
+                if (evaluation) {
+                    const students = await StudentService.getAll();
+                    const tutors = await TutorService.getAll();
+                    const studentsMap = {};
+                    const tutorsMap = {};
+                    (students.result || []).forEach(s => studentsMap[s.id] = `${s.nombre} ${s.apellido || ''}`);
+                    (tutors.result || []).forEach(t => tutorsMap[t.id] = `${t.nombre} ${t.apellido || ''}`);
+                    
+                    const mensaje = `
+                        <strong>Estudiante:</strong> ${studentsMap[evaluation.student_id] || `ID: ${evaluation.student_id}`}<br>
+                        <strong>Tutor:</strong> ${tutorsMap[evaluation.tutor_id] || `ID: ${evaluation.tutor_id}`}<br>
+                        <strong>Tipo:</strong> ${evaluation.evaluation_type || 'desempeño'}<br>
+                        <strong>Puntaje:</strong> ${evaluation.score || '-'}<br>
+                        <strong>Fecha:</strong> ${evaluation.evaluation_date || '-'}<br>
+                        <strong>Estado:</strong> ${evaluation.status === 'completed' ? 'Completada' : evaluation.status === 'pending' ? 'Pendiente' : 'Cancelada'}<br>
+                        <strong>Comentarios:</strong> ${evaluation.comments || 'Sin comentarios'}
+                    `;
+                    Swal.fire({
+                        title: 'Detalles de Evaluación',
+                        html: mensaje,
+                        icon: 'info',
+                        confirmButtonColor: '#3498db'
+                    });
+                }
+            } catch(e) {
+                showAlert('Error al ver evaluación', 'error');
+            }
+        }
+        
+        async function guardarEvaluacion() {
+            const id = document.getElementById('evaluation_id').value;
+            const student_id = document.getElementById('student_id').value;
+            const tutor_id = document.getElementById('tutor_id').value;
+            const score = document.getElementById('score').value;
+            const evaluation_date = document.getElementById('evaluation_date').value;
+            
+            if (!student_id || !tutor_id || !score || !evaluation_date) {
+                showAlert('Complete los campos requeridos', 'warning');
+                return;
+            }
+            
+            const evaluation = {
+                student_id: parseInt(student_id),
+                tutor_id: parseInt(tutor_id),
+                evaluation_type: document.getElementById('evaluation_type').value,
+                score: parseFloat(score),
+                evaluation_date: evaluation_date,
+                status: document.getElementById('status').value,
+                assignment_id: document.getElementById('assignment_id').value ? parseInt(document.getElementById('assignment_id').value) : null,
+                comments: document.getElementById('comments').value
+            };
+            
+            try {
+                if (EvaluationService.create) {
+                    if (id) {
+                        evaluation.id = parseInt(id);
+                        await EvaluationService.update(id, evaluation);
+                    } else {
+                        await EvaluationService.create(evaluation);
+                    }
+                    showAlert('Evaluación guardada correctamente');
+                } else {
+                    let evaluations = JSON.parse(localStorage.getItem('internsys_evaluations') || '[]');
+                    if (id) {
+                        const index = evaluations.findIndex(e => e.id == id);
+                        evaluation.id = parseInt(id);
+                        evaluations[index] = evaluation;
+                    } else {
+                        evaluation.id = evaluations.length + 1;
+                        evaluation.created_at = new Date().toISOString();
+                        evaluations.push(evaluation);
+                    }
+                    localStorage.setItem('internsys_evaluations', JSON.stringify(evaluations));
+                    showAlert('Evaluación guardada correctamente');
+                }
+                
+                modal.hide();
+                init();
+                
+            } catch(e) {
+                console.error('Error:', e);
+                showAlert('Error al guardar evaluación', 'error');
+            }
+        }
+        
+        async function eliminarEvaluacion(id) {
+            const confirm = await Swal.fire({
+                title: '¿Eliminar evaluación?',
+                text: 'Esta acción no se puede deshacer',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e74c3c',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            });
+            
+            if (confirm.isConfirmed) {
+                try {
+                    if (EvaluationService.delete) {
+                        await EvaluationService.delete(id);
+                    } else {
+                        let evaluations = JSON.parse(localStorage.getItem('internsys_evaluations') || '[]');
+                        evaluations = evaluations.filter(e => e.id != id);
+                        localStorage.setItem('internsys_evaluations', JSON.stringify(evaluations));
+                    }
+                    showAlert('Evaluación eliminada');
+                    init();
+                } catch(e) {
+                    showAlert('Error al eliminar', 'error');
+                }
+            }
+        }
+        
+        document.getElementById('toggleSidebar').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('closed');
+            document.getElementById('mainContent').classList.toggle('expanded');
+        });
+        
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

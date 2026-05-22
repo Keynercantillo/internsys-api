@@ -9,8 +9,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     
+    <!-- SweetAlert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <!-- Importar componentes web -->
-    <script src="/js/components/main-components.js"></script>
+    <script src="components/main-components.js" type="module"></script>
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -38,6 +41,10 @@
         
         /* Botones de acción superior */
         .action-buttons { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .btn-add-custom { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+        .btn-add-custom:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(243,156,18,0.4); }
+        .btn-refresh-custom { background: linear-gradient(135deg, #3498db, #2980b9); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+        .btn-refresh-custom:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(52,152,219,0.4); }
         
         /* Badges */
         .badge-empresarial { background: #f39c12; color: white; padding: 4px 8px; border-radius: 20px; font-size: 11px; }
@@ -54,6 +61,42 @@
         .dataTables_wrapper .dataTables_filter input { border-radius: 8px; border: 1px solid #ddd; padding: 6px 12px; }
         .dataTables_wrapper .dataTables_paginate .paginate_button { border-radius: 6px; margin: 0 2px; }
         .dataTables_wrapper .dataTables_paginate .paginate_button.current { background: #f39c12; color: white !important; border: none; }
+        
+        /* Modal de confirmación */
+        .confirm-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+            font-family: 'Segoe UI', sans-serif;
+            animation: fadeIn 0.3s ease;
+        }
+        .confirm-dialog {
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            min-width: 360px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            animation: scaleIn 0.3s ease;
+        }
+        .confirm-icon { font-size: 56px; margin-bottom: 16px; }
+        .confirm-title { margin-bottom: 12px; color: #2c3e50; font-size: 22px; font-weight: 600; }
+        .confirm-message { margin-bottom: 28px; color: #7f8c8d; font-size: 14px; }
+        .confirm-buttons { display: flex; gap: 12px; justify-content: center; }
+        .confirm-cancel { background: #95a5a6; color: white; border: none; padding: 10px 24px; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+        .confirm-cancel:hover { background: #7f8c8d; transform: translateY(-1px); }
+        .confirm-ok { background: #e74c3c; color: white; border: none; padding: 10px 24px; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+        .confirm-ok:hover { background: #c0392b; transform: translateY(-1px); }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         
         @media (max-width: 768px) { .sidebar { margin-left: -260px; } .main-content { margin-left: 0; } .action-buttons { flex-direction: column; } }
     </style>
@@ -79,20 +122,24 @@
                 <span class="navbar-brand mb-0 h4">Gestión de Tutores</span>
                 <div class="dropdown">
                     <button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-user"></i> <span id="userName">Admin</span></button>
-                    <ul class="dropdown-menu"><li><a class="dropdown-item" href="my-profile.html">Mi Perfil</a></li><li><hr class="dropdown-divider"></li><li><a class="dropdown-item text-danger" href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li></ul>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="my-profile.html">Mi Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li>
+                    </ul>
                 </div>
             </div>
         </nav>
 
         <div class="container-fluid mt-4">
-            <!-- Botones separados usando custom-button -->
+            <!-- Botones separados -->
             <div class="action-buttons">
-                <custom-button variant="success" onclick="showCreateModal()">
+                <button class="btn-add-custom" onclick="showCreateModal()">
                     <i class="fas fa-plus-circle"></i> Nuevo Tutor
-                </custom-button>
-                <custom-button variant="primary" onclick="refreshData()">
+                </button>
+                <button class="btn-refresh-custom" onclick="refreshData()">
                     <i class="fas fa-sync-alt"></i> Refrescar
-                </custom-button>
+                </button>
             </div>
 
             <!-- Tabla de Tutores -->
@@ -110,9 +157,7 @@
                             <th>Email</th>
                             <th>Acciones</th>
                         </thead>
-                    <tbody>
-                        <!-- Los datos se cargan dinámicamente -->
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
         </div>
@@ -144,8 +189,8 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <custom-button variant="secondary" onclick="closeModal()">Cancelar</custom-button>
-                    <custom-button variant="primary" onclick="saveTutor()">Guardar</custom-button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveTutor()">Guardar</button>
                 </div>
             </div>
         </div>
@@ -156,6 +201,7 @@
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="js/services/api.js"></script>
+    <script src="js/auth.js"></script>
     
     <script>
         let tutorsTable, currentEditId = null;
@@ -171,19 +217,79 @@
         }
         
         function closeModal() { 
-            bootstrap.Modal.getInstance(document.getElementById('tutorModal')).hide(); 
+            const modal = bootstrap.Modal.getInstance(document.getElementById('tutorModal'));
+            if (modal) modal.hide();
         }
         
-        // ✅ Función showAlert usando SweetAlert2 directamente (evita bucle)
-        function showAlert(message, type = 'success') {
+        // ============================================
+        // ALERTAS CON SweetAlert
+        // ============================================
+        function showSuccessAlert(message) {
             Swal.fire({
-                title: type === 'success' ? 'Éxito' : type === 'error' ? 'Error' : 'Información',
+                title: 'Éxito',
                 text: message,
-                icon: type,
+                icon: 'success',
                 confirmButtonColor: '#f39c12',
-                timer: 2000,
+                confirmButtonText: 'OK',
+                timer: 3000,
+                timerProgressBar: true,
+                showClass: { popup: 'animate__animated animate__fadeInUp' }
+            });
+        }
+        
+        function showErrorAlert(message) {
+            Swal.fire({
+                title: 'Error',
+                text: message,
+                icon: 'error',
+                confirmButtonColor: '#e74c3c',
+                confirmButtonText: 'OK',
+                timer: 3000,
                 timerProgressBar: true
             });
+        }
+        
+        function showWarningAlert(message) {
+            Swal.fire({
+                title: 'Advertencia',
+                text: message,
+                icon: 'warning',
+                confirmButtonColor: '#f39c12',
+                confirmButtonText: 'OK',
+                timer: 3000,
+                timerProgressBar: true
+            });
+        }
+        
+        // ============================================
+        // CONFIRMACIÓN PARA ELIMINAR
+        // ============================================
+        function confirmDelete(itemName, callback) {
+            const overlay = document.createElement('div');
+            overlay.className = 'confirm-overlay';
+            overlay.innerHTML = `
+                <div class="confirm-dialog">
+                    <div class="confirm-icon">⚠️</div>
+                    <h3 class="confirm-title">¿Eliminar?</h3>
+                    <p class="confirm-message">¿Estás seguro de eliminar <strong>${itemName}</strong>?</p>
+                    <div class="confirm-buttons">
+                        <button class="confirm-cancel" id="confirmCancelBtn">Cancelar</button>
+                        <button class="confirm-ok" id="confirmOkBtn">Eliminar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            
+            document.getElementById('confirmOkBtn').onclick = () => {
+                overlay.remove();
+                callback();
+            };
+            document.getElementById('confirmCancelBtn').onclick = () => {
+                overlay.remove();
+            };
+            overlay.onclick = (e) => {
+                if (e.target === overlay) overlay.remove();
+            };
         }
         
         async function initDataTable() {
@@ -197,8 +303,8 @@
                     t.apellido,
                     t.cedula,
                     t.tipo === 'empresarial' ? '<span class="badge-empresarial">Empresarial</span>' : '<span class="badge-academico">Académico</span>',
-                    t.telefono,
-                    t.email,
+                    t.telefono || '-',
+                    t.email || '-',
                     `<div style="display: flex; gap: 5px;">
                         <button class="btn-edit-table" onclick="editTutor(${t.id})"><i class="fas fa-edit"></i> Editar</button>
                         <button class="btn-delete-table" onclick="deleteTutor(${t.id})"><i class="fas fa-trash"></i> Eliminar</button>
@@ -227,13 +333,13 @@
                 });
             } catch(error) {
                 console.error('Error en initDataTable:', error);
-                showAlert('Error al cargar los datos', 'error');
+                showErrorAlert('Error al cargar los datos');
             }
         }
         
         async function refreshData() { 
             await initDataTable(); 
-            showAlert('Datos actualizados correctamente', 'success'); 
+            showSuccessAlert('Datos actualizados correctamente');
         }
         
         function showCreateModal() { 
@@ -259,7 +365,7 @@
                 document.getElementById('modalTitle').innerText = 'Editar Tutor'; 
                 new bootstrap.Modal(document.getElementById('tutorModal')).show(); 
             } catch(e) { 
-                showAlert('Error al cargar el tutor', 'error'); 
+                showErrorAlert('Error al cargar el tutor'); 
             } 
         }
         
@@ -276,36 +382,69 @@
                 telefono: document.getElementById('telefono').value, 
                 email: document.getElementById('email').value 
             }; 
+            
             try { 
                 if(currentEditId) { 
                     await TutorService.update(currentEditId, data); 
-                    showAlert('Tutor actualizado correctamente', 'success'); 
+                    showSuccessAlert('Tutor actualizado correctamente'); 
+                    closeModal(); 
+                    refreshData(); 
                 } else { 
                     await TutorService.create(data); 
-                    showAlert('Tutor creado correctamente', 'success'); 
+                    showSuccessAlert('Tutor creado correctamente'); 
+                    closeModal(); 
+                    refreshData(); 
                 } 
-                closeModal(); 
-                refreshData(); 
             } catch(e) { 
-                showAlert('Error al guardar: ' + e.message, 'error'); 
+                showErrorAlert('Error al guardar: ' + e.message); 
             } 
         }
         
-        async function deleteTutor(id) { 
-            if(confirm('¿Estás seguro de eliminar este tutor?')) { 
+        async function deleteTutor(id) {
+            const tutors = (await TutorService.getAll()).result || [];
+            const tutor = tutors.find(t => t.id === id);
+            const nombreTutor = tutor ? `${tutor.nombre} ${tutor.apellido}` : 'este tutor';
+            
+            confirmDelete(nombreTutor, async () => {
                 try { 
                     await TutorService.delete(id); 
-                    showAlert('Tutor eliminado correctamente', 'success'); 
+                    showSuccessAlert('Tutor eliminado correctamente'); 
                     refreshData(); 
                 } catch(e) { 
-                    showAlert('Error al eliminar: ' + e.message, 'error'); 
-                } 
-            } 
+                    showErrorAlert('Error al eliminar: ' + e.message); 
+                }
+            });
+        }
+        
+        function showWelcomeAlert() {
+            const user = getCurrentUser();
+            if(user) {
+                Swal.fire({
+                    title: 'Bienvenido',
+                    html: `<div style="text-align: center;">
+                                <i class="fas fa-check-circle" style="font-size: 48px; color: #f39c12; margin-bottom: 15px;"></i>
+                                <h3 style="color: #2c3e50;">${user.nombre}</h3>
+                                <p style="color: #7f8c8d;">(Administrador)</p>
+                            </div>`,
+                    icon: 'success',
+                    confirmButtonColor: '#f39c12',
+                    confirmButtonText: 'OK',
+                    timer: 3000,
+                    timerProgressBar: true,
+                    showConfirmButton: true,
+                    allowOutsideClick: false
+                });
+            }
         }
         
         function loadUserInfo() { 
             const user = getCurrentUser(); 
-            if(user) document.getElementById('userName').innerText = user.nombre; 
+            if(user) {
+                document.getElementById('userName').innerText = user.nombre;
+                setTimeout(() => {
+                    showWelcomeAlert();
+                }, 300);
+            }
         }
         
         document.getElementById('toggleSidebar').addEventListener('click', () => { 

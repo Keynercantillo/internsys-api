@@ -18,13 +18,14 @@ from routes.tutors_routes import router as tutors_router
 from routes.internship_offers_routes import router as internship_offers_router
 from routes.internship_assignments_routes import router as internship_assignments_router
 from routes.agreements_routes import router as agreements_router
-from routes.evaluations_routes import router as evaluations_router
+from routes.evaluations_routes import router as evaluations_router  # ✅ NUEVO
 from routes.followup_visits_routes import router as followup_visits_router
 from routes.notifications_routes import router as notifications_router
 from routes.profiles_routes import router as profiles_router
 from routes.reports_routes import router as reports_router
 from routes.auth_routes import router as auth_router
-from routes.applications_routes import router as applications_router  # ✅ NUEVO
+from routes.applications_routes import router as applications_router
+from routes.offers_routes import router as offers_router
 
 # ============================================
 # CREAR APLICACIÓN FASTAPI
@@ -45,6 +46,7 @@ origins = [
     "http://127.0.0.1:8000",
     "http://localhost:3000",
     "http://localhost:5500",
+    "http://localhost:8080",
     "*"
 ]
 
@@ -100,10 +102,12 @@ async def serve_index():
     return HTMLResponse("""
     <html>
         <head><title>InternSys</title></head>
-        <body>
-            <h1>InternSys API</h1>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h1>🏢 InternSys API</h1>
             <p>Frontend no encontrado. Asegúrate de tener la carpeta 'frontend' en el mismo nivel que 'app'.</p>
-            <p>Documentación API: <a href="/docs">/docs</a></p>
+            <p>📚 <a href="/docs">Documentación API</a></p>
+            <hr>
+            <p>✅ API funcionando correctamente</p>
         </body>
     </html>
     """)
@@ -111,7 +115,6 @@ async def serve_index():
 # Ruta para servir cualquier archivo HTML del frontend
 @app.get("/{html_file}")
 async def serve_html(html_file: str):
-    # Seguridad: solo permitir archivos .html
     if not html_file.endswith('.html'):
         return {"error": "Solo se permiten archivos HTML"}
     
@@ -135,12 +138,13 @@ app.include_router(tutors_router, prefix="/api", tags=["Tutors"])
 app.include_router(internship_offers_router, prefix="/api", tags=["Internship Offers"])
 app.include_router(internship_assignments_router, prefix="/api", tags=["Internship Assignments"])
 app.include_router(agreements_router, prefix="/api", tags=["Agreements"])
-app.include_router(evaluations_router, prefix="/api", tags=["Evaluations"])
+app.include_router(evaluations_router, prefix="/api", tags=["Evaluations"])  # ✅ NUEVO
 app.include_router(followup_visits_router, prefix="/api", tags=["Follow-up Visits"])
 app.include_router(notifications_router, prefix="/api", tags=["Notifications"])
 app.include_router(profiles_router, prefix="/api", tags=["Profiles"])
 app.include_router(reports_router, prefix="/api", tags=["Reports"])
-app.include_router(applications_router, prefix="/api", tags=["Applications"])  # ✅ NUEVO
+app.include_router(applications_router, prefix="/api", tags=["Applications"])
+app.include_router(offers_router, prefix="/api", tags=["Offers"])
 
 # ============================================
 # RUTAS ADICIONALES DE LA API
@@ -151,7 +155,17 @@ async def health_check():
     return {
         "status": "healthy",
         "message": "API funcionando correctamente",
-        "version": "2.0.0"
+        "version": "2.0.0",
+        "endpoints": {
+            "auth": "/api/login, /api/register",
+            "students": "/api/get_students",
+            "companies": "/api/get_companies",
+            "tutors": "/api/get_tutors",
+            "offers": "/api/get_offers",
+            "applications": "/api/get_applications",
+            "evaluations": "/api/get_evaluations",  # ✅ NUEVO
+            "reports": "/api/get_reports"
+        }
     }
 
 @app.get("/routes")
@@ -181,8 +195,20 @@ if __name__ == "__main__":
     print(f"📚 Documentación API: http://localhost:8000/docs")
     print(f"🌐 Frontend: http://localhost:8000")
     print(f"❤️ Health: http://localhost:8000/health")
+    print(f"📋 Rutas: http://localhost:8000/routes")
     print("="*60)
     print("✨ Servidor corriendo con recarga automática")
+    print("="*60)
+    print("\n📌 Endpoints principales:")
+    print("   POST   /api/login                    - Iniciar sesión")
+    print("   POST   /api/register                 - Registrar usuario")
+    print("   GET    /api/get_students             - Obtener estudiantes")
+    print("   GET    /api/get_companies            - Obtener empresas")
+    print("   GET    /api/get_tutors               - Obtener tutores")
+    print("   GET    /api/get_offers               - Obtener ofertas")
+    print("   GET    /api/get_applications         - Obtener postulaciones")
+    print("   GET    /api/get_evaluations          - Obtener evaluaciones")  # ✅ NUEVO
+    print("   GET    /api/get_reports              - Obtener reportes")
     print("="*60)
     
     uvicorn.run(

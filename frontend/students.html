@@ -9,6 +9,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     
+    <!-- SweetAlert (fallback) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <!-- Importar componentes web -->
     <script src="components/main-components.js" type="module"></script>
     
@@ -36,24 +39,60 @@
         .table-container { background: white; border-radius: 12px; padding: 20px; margin-top: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         .table-container h4 { margin: 0 0 20px 0; color: #2c3e50; font-weight: 600; border-left: 4px solid #3498db; padding-left: 15px; }
         
-        /* Botones de acción superior */
+        /* Botones */
         .action-buttons { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
-        .btn-add-custom { background: linear-gradient(135deg, #27ae60, #229954); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-add-custom { background: linear-gradient(135deg, #27ae60, #229954); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
         .btn-add-custom:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(39,174,96,0.4); }
-        .btn-refresh-custom { background: linear-gradient(135deg, #3498db, #2980b9); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-refresh-custom { background: linear-gradient(135deg, #3498db, #2980b9); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
         .btn-refresh-custom:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(52,152,219,0.4); }
         
-        /* Botones dentro de la tabla */
+        /* Botones tabla */
         .btn-edit-table { background: #f39c12; color: white; border: none; padding: 5px 12px; border-radius: 5px; font-size: 12px; margin-right: 5px; cursor: pointer; transition: all 0.2s; }
         .btn-edit-table:hover { background: #e67e22; transform: translateY(-1px); }
         .btn-delete-table { background: #e74c3c; color: white; border: none; padding: 5px 12px; border-radius: 5px; font-size: 12px; cursor: pointer; transition: all 0.2s; }
         .btn-delete-table:hover { background: #c0392b; transform: translateY(-1px); }
         
-        /* DataTables personalización */
+        /* DataTables */
         .dataTables_wrapper .dataTables_length select, 
         .dataTables_wrapper .dataTables_filter input { border-radius: 8px; border: 1px solid #ddd; padding: 6px 12px; }
         .dataTables_wrapper .dataTables_paginate .paginate_button { border-radius: 6px; margin: 0 2px; }
         .dataTables_wrapper .dataTables_paginate .paginate_button.current { background: #3498db; color: white !important; border: none; }
+        
+        /* Modal de confirmación */
+        .confirm-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+            font-family: 'Segoe UI', sans-serif;
+            animation: fadeIn 0.3s ease;
+        }
+        .confirm-dialog {
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            min-width: 360px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            animation: scaleIn 0.3s ease;
+        }
+        .confirm-icon { font-size: 56px; margin-bottom: 16px; }
+        .confirm-title { margin-bottom: 12px; color: #2c3e50; font-size: 22px; font-weight: 600; }
+        .confirm-message { margin-bottom: 28px; color: #7f8c8d; font-size: 14px; }
+        .confirm-buttons { display: flex; gap: 12px; justify-content: center; }
+        .confirm-cancel { background: #95a5a6; color: white; border: none; padding: 10px 24px; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+        .confirm-cancel:hover { background: #7f8c8d; transform: translateY(-1px); }
+        .confirm-ok { background: #e74c3c; color: white; border: none; padding: 10px 24px; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+        .confirm-ok:hover { background: #c0392b; transform: translateY(-1px); }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         
         @media (max-width: 768px) { .sidebar { margin-left: -260px; } .main-content { margin-left: 0; } .action-buttons { flex-direction: column; } }
     </style>
@@ -79,13 +118,16 @@
                 <span class="navbar-brand mb-0 h4">Gestión de Estudiantes</span>
                 <div class="dropdown">
                     <button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-user"></i> <span id="userName">Admin</span></button>
-                    <ul class="dropdown-menu"><li><a class="dropdown-item" href="my-profile.html">Mi Perfil</a></li><li><hr class="dropdown-divider"></li><li><a class="dropdown-item text-danger" href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li></ul>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="my-profile.html">Mi Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li>
+                    </ul>
                 </div>
             </div>
         </nav>
 
         <div class="container-fluid mt-4">
-            <!-- Botones separados y con mejor diseño -->
             <div class="action-buttons">
                 <button class="btn-add-custom" onclick="showCreateModal()">
                     <i class="fas fa-plus-circle"></i> Nuevo Estudiante
@@ -95,7 +137,6 @@
                 </button>
             </div>
 
-            <!-- Tabla de Estudiantes -->
             <div class="table-container">
                 <h4><i class="fas fa-users me-2"></i>Lista de Estudiantes</h4>
                 <table id="studentsTable" class="table table-striped table-bordered" style="width:100%">
@@ -111,9 +152,7 @@
                             <th>Semestre</th>
                             <th>Acciones</th>
                         </thead>
-                    <tbody>
-                        <!-- Los datos se cargan dinámicamente -->
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
         </div>
@@ -157,20 +196,113 @@
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="js/services/api.js"></script>
+    <script src="js/auth.js"></script>
     
     <script>
         let studentsTable, currentEditId = null;
         
-        function getCurrentUser() { const user = localStorage.getItem('internsys_user'); return user ? JSON.parse(user) : null; }
-        function cerrarSesion() { localStorage.removeItem('internsys_user'); window.location.href = 'index.html'; }
-        function closeModal() { bootstrap.Modal.getInstance(document.getElementById('studentModal')).hide(); }
-        function showAlert(msg, type) { if(window.showAlert) window.showAlert(msg, type); else alert(msg); }
+        function getCurrentUser() { 
+            const user = localStorage.getItem('internsys_user'); 
+            return user ? JSON.parse(user) : null; 
+        }
+        
+        function cerrarSesion() { 
+            localStorage.removeItem('internsys_user'); 
+            window.location.href = 'index.html'; 
+        }
+        
+        function closeModal() { 
+            const modal = bootstrap.Modal.getInstance(document.getElementById('studentModal'));
+            if (modal) modal.hide();
+        }
+        
+        // ============================================
+        // ALERTAS CON SweetAlert (más confiable)
+        // ============================================
+        function showSuccessAlert(message) {
+            Swal.fire({
+                title: 'Éxito',
+                text: message,
+                icon: 'success',
+                confirmButtonColor: '#3498db',
+                confirmButtonText: 'OK',
+                timer: 3000,
+                timerProgressBar: true,
+                showClass: { popup: 'animate__animated animate__fadeInUp' }
+            });
+        }
+        
+        function showErrorAlert(message) {
+            Swal.fire({
+                title: 'Error',
+                text: message,
+                icon: 'error',
+                confirmButtonColor: '#e74c3c',
+                confirmButtonText: 'OK',
+                timer: 3000,
+                timerProgressBar: true
+            });
+        }
+        
+        function showWarningAlert(message) {
+            Swal.fire({
+                title: 'Advertencia',
+                text: message,
+                icon: 'warning',
+                confirmButtonColor: '#f39c12',
+                confirmButtonText: 'OK',
+                timer: 3000,
+                timerProgressBar: true
+            });
+        }
+        
+        function showInfoAlert(message) {
+            Swal.fire({
+                title: 'Información',
+                text: message,
+                icon: 'info',
+                confirmButtonColor: '#3498db',
+                confirmButtonText: 'OK',
+                timer: 3000,
+                timerProgressBar: true
+            });
+        }
+        
+        // ============================================
+        // CONFIRMACIÓN PARA ELIMINAR
+        // ============================================
+        function confirmDelete(itemName, callback) {
+            const overlay = document.createElement('div');
+            overlay.className = 'confirm-overlay';
+            overlay.innerHTML = `
+                <div class="confirm-dialog">
+                    <div class="confirm-icon">⚠️</div>
+                    <h3 class="confirm-title">¿Eliminar?</h3>
+                    <p class="confirm-message">¿Estás seguro de eliminar <strong>${itemName}</strong>?</p>
+                    <div class="confirm-buttons">
+                        <button class="confirm-cancel" id="confirmCancelBtn">Cancelar</button>
+                        <button class="confirm-ok" id="confirmOkBtn">Eliminar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            
+            document.getElementById('confirmOkBtn').onclick = () => {
+                overlay.remove();
+                callback();
+            };
+            document.getElementById('confirmCancelBtn').onclick = () => {
+                overlay.remove();
+            };
+            overlay.onclick = (e) => {
+                if (e.target === overlay) overlay.remove();
+            };
+        }
         
         async function initDataTable() {
             const response = await StudentService.getAll();
             const students = response.result || [];
             
-            // Botones dentro de la tabla con mejor diseño
             const data = students.map(s => [
                 s.id,
                 s.nombre,
@@ -190,15 +322,9 @@
             studentsTable = $('#studentsTable').DataTable({ 
                 data: data, 
                 columns: [
-                    { title: "ID" }, 
-                    { title: "Nombre" }, 
-                    { title: "Apellido" }, 
-                    { title: "Cédula" }, 
-                    { title: "Edad" }, 
-                    { title: "Matrícula" }, 
-                    { title: "Carrera" }, 
-                    { title: "Semestre" }, 
-                    { title: "Acciones", orderable: false }
+                    { title: "ID" }, { title: "Nombre" }, { title: "Apellido" }, 
+                    { title: "Cédula" }, { title: "Edad" }, { title: "Matrícula" }, 
+                    { title: "Carrera" }, { title: "Semestre" }, { title: "Acciones", orderable: false }
                 ], 
                 language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' }, 
                 pageLength: 10,
@@ -207,20 +333,126 @@
             });
         }
         
-        async function refreshData() { await initDataTable(); showAlert('Datos actualizados correctamente', 'success'); }
+        async function refreshData() { 
+            await initDataTable(); 
+            showSuccessAlert('Datos actualizados correctamente');
+        }
         
-        function showCreateModal() { currentEditId = null; document.getElementById('studentForm').reset(); document.getElementById('modalTitle').innerText = 'Nuevo Estudiante'; new bootstrap.Modal(document.getElementById('studentModal')).show(); }
+        function showCreateModal() { 
+            currentEditId = null; 
+            document.getElementById('studentForm').reset(); 
+            document.getElementById('modalTitle').innerText = 'Nuevo Estudiante'; 
+            new bootstrap.Modal(document.getElementById('studentModal')).show(); 
+        }
         
-        async function editStudent(id) { try { const s = await StudentService.getById(id); currentEditId = id; document.getElementById('nombre').value = s.nombre; document.getElementById('apellido').value = s.apellido; document.getElementById('cedula').value = s.cedula; document.getElementById('edad').value = s.edad; document.getElementById('usuario').value = s.usuario; document.getElementById('matricula').value = s.matricula; document.getElementById('carrera').value = s.carrera; document.getElementById('semester').value = s.semester; document.getElementById('promedio').value = s.promedio; document.getElementById('modalTitle').innerText = 'Editar Estudiante'; new bootstrap.Modal(document.getElementById('studentModal')).show(); } catch(e) { showAlert('Error al cargar el estudiante', 'error'); } }
+        async function editStudent(id) { 
+            try { 
+                const s = await StudentService.getById(id); 
+                currentEditId = id; 
+                document.getElementById('nombre').value = s.nombre; 
+                document.getElementById('apellido').value = s.apellido; 
+                document.getElementById('cedula').value = s.cedula; 
+                document.getElementById('edad').value = s.edad; 
+                document.getElementById('usuario').value = s.usuario; 
+                document.getElementById('matricula').value = s.matricula; 
+                document.getElementById('carrera').value = s.carrera; 
+                document.getElementById('semester').value = s.semester; 
+                document.getElementById('promedio').value = s.promedio; 
+                document.getElementById('modalTitle').innerText = 'Editar Estudiante'; 
+                new bootstrap.Modal(document.getElementById('studentModal')).show(); 
+            } catch(e) { 
+                showErrorAlert('Error al cargar el estudiante'); 
+            } 
+        }
         
-        async function saveStudent() { const data = { nombre: document.getElementById('nombre').value, apellido: document.getElementById('apellido').value, cedula: document.getElementById('cedula').value, edad: parseInt(document.getElementById('edad').value), usuario: document.getElementById('usuario').value, contraseña: document.getElementById('contraseña').value, matricula: document.getElementById('matricula').value, carrera: document.getElementById('carrera').value, semester: parseInt(document.getElementById('semester').value), promedio: parseFloat(document.getElementById('promedio').value) || null }; try { if(currentEditId) { await StudentService.update(currentEditId, data); showAlert('Estudiante actualizado correctamente', 'success'); } else { await StudentService.create(data); showAlert('Estudiante creado correctamente', 'success'); } closeModal(); refreshData(); } catch(e) { showAlert('Error al guardar: ' + e.message, 'error'); } }
+        async function saveStudent() { 
+            const data = { 
+                nombre: document.getElementById('nombre').value,
+                apellido: document.getElementById('apellido').value,
+                cedula: document.getElementById('cedula').value,
+                edad: parseInt(document.getElementById('edad').value),
+                usuario: document.getElementById('usuario').value,
+                contraseña: document.getElementById('contraseña').value,
+                matricula: document.getElementById('matricula').value,
+                carrera: document.getElementById('carrera').value,
+                semester: parseInt(document.getElementById('semester').value),
+                promedio: parseFloat(document.getElementById('promedio').value) || null
+            }; 
+            
+            try { 
+                if(currentEditId) { 
+                    await StudentService.update(currentEditId, data); 
+                    showSuccessAlert('Estudiante actualizado correctamente'); 
+                    closeModal(); 
+                    refreshData(); 
+                } else { 
+                    await StudentService.create(data); 
+                    showSuccessAlert('Estudiante creado correctamente'); 
+                    closeModal(); 
+                    refreshData(); 
+                } 
+            } catch(e) { 
+                showErrorAlert('Error al guardar: ' + e.message); 
+            } 
+        }
         
-        async function deleteStudent(id) { if(confirm('¿Estás seguro de eliminar este estudiante?')) { try { await StudentService.delete(id); showAlert('Estudiante eliminado correctamente', 'success'); refreshData(); } catch(e) { showAlert('Error al eliminar: ' + e.message, 'error'); } } }
+        async function deleteStudent(id) {
+            const estudiantes = (await StudentService.getAll()).result || [];
+            const estudiante = estudiantes.find(s => s.id === id);
+            const nombreEstudiante = estudiante ? `${estudiante.nombre} ${estudiante.apellido}` : 'este estudiante';
+            
+            confirmDelete(nombreEstudiante, async () => {
+                try { 
+                    await StudentService.delete(id); 
+                    showSuccessAlert('Estudiante eliminado correctamente'); 
+                    refreshData(); 
+                } catch(e) { 
+                    showErrorAlert('Error al eliminar: ' + e.message); 
+                }
+            });
+        }
         
-        function loadUserInfo() { const user = getCurrentUser(); if(user) document.getElementById('userName').innerText = user.nombre; }
+        function showWelcomeAlert() {
+            const user = getCurrentUser();
+            if(user) {
+                Swal.fire({
+                    title: 'Bienvenido',
+                    html: `<div style="text-align: center;">
+                                <i class="fas fa-check-circle" style="font-size: 48px; color: #27ae60; margin-bottom: 15px;"></i>
+                                <h3 style="color: #2c3e50;">${user.nombre}</h3>
+                                <p style="color: #7f8c8d;">(Administrador)</p>
+                            </div>`,
+                    icon: 'success',
+                    confirmButtonColor: '#3498db',
+                    confirmButtonText: 'OK',
+                    timer: 3000,
+                    timerProgressBar: true,
+                    showConfirmButton: true,
+                    allowOutsideClick: false
+                });
+            }
+        }
         
-        document.getElementById('toggleSidebar').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('closed'); document.getElementById('mainContent').classList.toggle('expanded'); });
-        document.addEventListener('DOMContentLoaded', () => { loadUserInfo(); initDataTable(); });
+        function loadUserInfo() { 
+            const user = getCurrentUser(); 
+            if(user) {
+                document.getElementById('userName').innerText = user.nombre;
+                // Mostrar bienvenida después de cargar
+                setTimeout(() => {
+                    showWelcomeAlert();
+                }, 300);
+            }
+        }
+        
+        document.getElementById('toggleSidebar').addEventListener('click', () => { 
+            document.getElementById('sidebar').classList.toggle('closed'); 
+            document.getElementById('mainContent').classList.toggle('expanded'); 
+        });
+        
+        document.addEventListener('DOMContentLoaded', () => { 
+            loadUserInfo(); 
+            initDataTable(); 
+        });
     </script>
 </body>
 </html>

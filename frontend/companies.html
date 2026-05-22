@@ -9,6 +9,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     
+    <!-- SweetAlert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <!-- Importar componentes web -->
     <script src="components/main-components.js" type="module"></script>
     
@@ -38,9 +41,9 @@
         
         /* Botones de acción superior */
         .action-buttons { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
-        .btn-add-custom { background: linear-gradient(135deg, #27ae60, #229954); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-add-custom { background: linear-gradient(135deg, #27ae60, #229954); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
         .btn-add-custom:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(39,174,96,0.4); }
-        .btn-refresh-custom { background: linear-gradient(135deg, #3498db, #2980b9); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-refresh-custom { background: linear-gradient(135deg, #3498db, #2980b9); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
         .btn-refresh-custom:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(52,152,219,0.4); }
         
         /* Botones dentro de la tabla */
@@ -58,6 +61,42 @@
         .dataTables_wrapper .dataTables_filter input { border-radius: 8px; border: 1px solid #ddd; padding: 6px 12px; }
         .dataTables_wrapper .dataTables_paginate .paginate_button { border-radius: 6px; margin: 0 2px; }
         .dataTables_wrapper .dataTables_paginate .paginate_button.current { background: #27ae60; color: white !important; border: none; }
+        
+        /* Modal de confirmación */
+        .confirm-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+            font-family: 'Segoe UI', sans-serif;
+            animation: fadeIn 0.3s ease;
+        }
+        .confirm-dialog {
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            min-width: 360px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            animation: scaleIn 0.3s ease;
+        }
+        .confirm-icon { font-size: 56px; margin-bottom: 16px; }
+        .confirm-title { margin-bottom: 12px; color: #2c3e50; font-size: 22px; font-weight: 600; }
+        .confirm-message { margin-bottom: 28px; color: #7f8c8d; font-size: 14px; }
+        .confirm-buttons { display: flex; gap: 12px; justify-content: center; }
+        .confirm-cancel { background: #95a5a6; color: white; border: none; padding: 10px 24px; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+        .confirm-cancel:hover { background: #7f8c8d; transform: translateY(-1px); }
+        .confirm-ok { background: #e74c3c; color: white; border: none; padding: 10px 24px; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+        .confirm-ok:hover { background: #c0392b; transform: translateY(-1px); }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         
         @media (max-width: 768px) { .sidebar { margin-left: -260px; } .main-content { margin-left: 0; } .action-buttons { flex-direction: column; } }
     </style>
@@ -83,7 +122,11 @@
                 <span class="navbar-brand mb-0 h4">Gestión de Empresas</span>
                 <div class="dropdown">
                     <button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-user"></i> <span id="userName">Admin</span></button>
-                    <ul class="dropdown-menu"><li><a class="dropdown-item" href="my-profile.html">Mi Perfil</a></li><li><hr class="dropdown-divider"></li><li><a class="dropdown-item text-danger" href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li></ul>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="my-profile.html">Mi Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li>
+                    </ul>
                 </div>
             </div>
         </nav>
@@ -114,9 +157,7 @@
                             <th>Estado</th>
                             <th>Acciones</th>
                         </thead>
-                    <tbody>
-                        <!-- Los datos se cargan dinámicamente -->
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
         </div>
@@ -156,14 +197,96 @@
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="js/services/api.js"></script>
+    <script src="js/auth.js"></script>
     
     <script>
         let companiesTable, currentEditId = null;
         
-        function getCurrentUser() { const user = localStorage.getItem('internsys_user'); return user ? JSON.parse(user) : null; }
-        function cerrarSesion() { localStorage.removeItem('internsys_user'); window.location.href = 'index.html'; }
-        function closeModal() { bootstrap.Modal.getInstance(document.getElementById('companyModal')).hide(); }
-        function showAlert(msg, type) { if(window.showAlert) window.showAlert(msg, type); else alert(msg); }
+        function getCurrentUser() { 
+            const user = localStorage.getItem('internsys_user'); 
+            return user ? JSON.parse(user) : null; 
+        }
+        
+        function cerrarSesion() { 
+            localStorage.removeItem('internsys_user'); 
+            window.location.href = 'index.html'; 
+        }
+        
+        function closeModal() { 
+            const modal = bootstrap.Modal.getInstance(document.getElementById('companyModal'));
+            if (modal) modal.hide();
+        }
+        
+        // ============================================
+        // ALERTAS CON SweetAlert
+        // ============================================
+        function showSuccessAlert(message) {
+            Swal.fire({
+                title: 'Éxito',
+                text: message,
+                icon: 'success',
+                confirmButtonColor: '#27ae60',
+                confirmButtonText: 'OK',
+                timer: 3000,
+                timerProgressBar: true,
+                showClass: { popup: 'animate__animated animate__fadeInUp' }
+            });
+        }
+        
+        function showErrorAlert(message) {
+            Swal.fire({
+                title: 'Error',
+                text: message,
+                icon: 'error',
+                confirmButtonColor: '#e74c3c',
+                confirmButtonText: 'OK',
+                timer: 3000,
+                timerProgressBar: true
+            });
+        }
+        
+        function showWarningAlert(message) {
+            Swal.fire({
+                title: 'Advertencia',
+                text: message,
+                icon: 'warning',
+                confirmButtonColor: '#f39c12',
+                confirmButtonText: 'OK',
+                timer: 3000,
+                timerProgressBar: true
+            });
+        }
+        
+        // ============================================
+        // CONFIRMACIÓN PARA ELIMINAR
+        // ============================================
+        function confirmDelete(itemName, callback) {
+            const overlay = document.createElement('div');
+            overlay.className = 'confirm-overlay';
+            overlay.innerHTML = `
+                <div class="confirm-dialog">
+                    <div class="confirm-icon">⚠️</div>
+                    <h3 class="confirm-title">¿Eliminar?</h3>
+                    <p class="confirm-message">¿Estás seguro de eliminar <strong>${itemName}</strong>?</p>
+                    <div class="confirm-buttons">
+                        <button class="confirm-cancel" id="confirmCancelBtn">Cancelar</button>
+                        <button class="confirm-ok" id="confirmOkBtn">Eliminar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            
+            document.getElementById('confirmOkBtn').onclick = () => {
+                overlay.remove();
+                callback();
+            };
+            document.getElementById('confirmCancelBtn').onclick = () => {
+                overlay.remove();
+            };
+            overlay.onclick = (e) => {
+                if (e.target === overlay) overlay.remove();
+            };
+        }
         
         async function initDataTable() {
             const response = await CompanyService.getAll();
@@ -203,20 +326,122 @@
             });
         }
         
-        async function refreshData() { await initDataTable(); showAlert('Datos actualizados correctamente', 'success'); }
+        async function refreshData() { 
+            await initDataTable(); 
+            showSuccessAlert('Datos actualizados correctamente');
+        }
         
-        function showCreateModal() { currentEditId = null; document.getElementById('companyForm').reset(); document.getElementById('modalTitle').innerText = 'Nueva Empresa'; new bootstrap.Modal(document.getElementById('companyModal')).show(); }
+        function showCreateModal() { 
+            currentEditId = null; 
+            document.getElementById('companyForm').reset(); 
+            document.getElementById('modalTitle').innerText = 'Nueva Empresa'; 
+            new bootstrap.Modal(document.getElementById('companyModal')).show(); 
+        }
         
-        async function editCompany(id) { try { const c = await CompanyService.getById(id); currentEditId = id; document.getElementById('name').value = c.name; document.getElementById('ruc').value = c.ruc; document.getElementById('address').value = c.address; document.getElementById('phone').value = c.phone; document.getElementById('email').value = c.email; document.getElementById('contact_person').value = c.contact_person; document.getElementById('sector').value = c.sector; document.getElementById('status').value = c.status; document.getElementById('modalTitle').innerText = 'Editar Empresa'; new bootstrap.Modal(document.getElementById('companyModal')).show(); } catch(e) { showAlert('Error al cargar la empresa', 'error'); } }
+        async function editCompany(id) { 
+            try { 
+                const c = await CompanyService.getById(id); 
+                currentEditId = id; 
+                document.getElementById('name').value = c.name; 
+                document.getElementById('ruc').value = c.ruc; 
+                document.getElementById('address').value = c.address; 
+                document.getElementById('phone').value = c.phone; 
+                document.getElementById('email').value = c.email; 
+                document.getElementById('contact_person').value = c.contact_person; 
+                document.getElementById('sector').value = c.sector; 
+                document.getElementById('status').value = c.status; 
+                document.getElementById('modalTitle').innerText = 'Editar Empresa'; 
+                new bootstrap.Modal(document.getElementById('companyModal')).show(); 
+            } catch(e) { 
+                showErrorAlert('Error al cargar la empresa'); 
+            } 
+        }
         
-        async function saveCompany() { const data = { name: document.getElementById('name').value, ruc: document.getElementById('ruc').value, address: document.getElementById('address').value, phone: document.getElementById('phone').value, email: document.getElementById('email').value, contact_person: document.getElementById('contact_person').value, sector: document.getElementById('sector').value, status: document.getElementById('status').value }; try { if(currentEditId) { await CompanyService.update(currentEditId, data); showAlert('Empresa actualizada correctamente', 'success'); } else { await CompanyService.create(data); showAlert('Empresa creada correctamente', 'success'); } closeModal(); refreshData(); } catch(e) { showAlert('Error al guardar: ' + e.message, 'error'); } }
+        async function saveCompany() { 
+            const data = { 
+                name: document.getElementById('name').value,
+                ruc: document.getElementById('ruc').value,
+                address: document.getElementById('address').value,
+                phone: document.getElementById('phone').value,
+                email: document.getElementById('email').value,
+                contact_person: document.getElementById('contact_person').value,
+                sector: document.getElementById('sector').value,
+                status: document.getElementById('status').value
+            }; 
+            
+            try { 
+                if(currentEditId) { 
+                    await CompanyService.update(currentEditId, data); 
+                    showSuccessAlert('Empresa actualizada correctamente'); 
+                    closeModal(); 
+                    refreshData(); 
+                } else { 
+                    await CompanyService.create(data); 
+                    showSuccessAlert('Empresa creada correctamente'); 
+                    closeModal(); 
+                    refreshData(); 
+                } 
+            } catch(e) { 
+                showErrorAlert('Error al guardar: ' + e.message); 
+            } 
+        }
         
-        async function deleteCompany(id) { if(confirm('¿Estás seguro de eliminar esta empresa?')) { try { await CompanyService.delete(id); showAlert('Empresa eliminada correctamente', 'success'); refreshData(); } catch(e) { showAlert('Error al eliminar: ' + e.message, 'error'); } } }
+        async function deleteCompany(id) {
+            const companies = (await CompanyService.getAll()).result || [];
+            const company = companies.find(c => c.id === id);
+            const nombreEmpresa = company ? company.name : 'esta empresa';
+            
+            confirmDelete(nombreEmpresa, async () => {
+                try { 
+                    await CompanyService.delete(id); 
+                    showSuccessAlert('Empresa eliminada correctamente'); 
+                    refreshData(); 
+                } catch(e) { 
+                    showErrorAlert('Error al eliminar: ' + e.message); 
+                }
+            });
+        }
         
-        function loadUserInfo() { const user = getCurrentUser(); if(user) document.getElementById('userName').innerText = user.nombre; }
+        function showWelcomeAlert() {
+            const user = getCurrentUser();
+            if(user) {
+                Swal.fire({
+                    title: 'Bienvenido',
+                    html: `<div style="text-align: center;">
+                                <i class="fas fa-check-circle" style="font-size: 48px; color: #27ae60; margin-bottom: 15px;"></i>
+                                <h3 style="color: #2c3e50;">${user.nombre}</h3>
+                                <p style="color: #7f8c8d;">(Administrador)</p>
+                            </div>`,
+                    icon: 'success',
+                    confirmButtonColor: '#27ae60',
+                    confirmButtonText: 'OK',
+                    timer: 3000,
+                    timerProgressBar: true,
+                    showConfirmButton: true,
+                    allowOutsideClick: false
+                });
+            }
+        }
         
-        document.getElementById('toggleSidebar').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('closed'); document.getElementById('mainContent').classList.toggle('expanded'); });
-        document.addEventListener('DOMContentLoaded', () => { loadUserInfo(); initDataTable(); });
+        function loadUserInfo() { 
+            const user = getCurrentUser(); 
+            if(user) {
+                document.getElementById('userName').innerText = user.nombre;
+                setTimeout(() => {
+                    showWelcomeAlert();
+                }, 300);
+            }
+        }
+        
+        document.getElementById('toggleSidebar').addEventListener('click', () => { 
+            document.getElementById('sidebar').classList.toggle('closed'); 
+            document.getElementById('mainContent').classList.toggle('expanded'); 
+        });
+        
+        document.addEventListener('DOMContentLoaded', () => { 
+            loadUserInfo(); 
+            initDataTable(); 
+        });
     </script>
 </body>
 </html>
